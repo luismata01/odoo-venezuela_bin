@@ -126,7 +126,8 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_tree" />
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='amount_total']" position="after">
+            <xpath expr="//field[@name='state']" position="before">
+            <!-- <xpath expr="//field[@name='amount_total']" position="after"> -->
             <!-- <xpath expr="//field[@name='amount_total_signed']" position="after"> -->
                 <field name="foreign_rate" optional="show" />
             </xpath>
@@ -137,7 +138,8 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_invoice_tree" />
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='amount_total_signed']" position="after">
+            <xpath expr="//field[@name='state']" position="before">
+            <!-- <xpath expr="//field[@name='amount_total_signed']" position="after"> -->
                 <field name="foreign_currency_id" column_invisible="True" />
                 <field
                     name="foreign_total_billed"
