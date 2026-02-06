@@ -972,7 +972,7 @@ class AccountMove(models.Model):
         return super().action_post()
 
     @api.depends(
-        "invoice_line_ids.compute_all_tax",
+        # "invoice_line_ids.compute_all_tax",
         "invoice_line_ids.price_subtotal",
         "foreign_inverse_rate",
         "foreign_currency_id",
