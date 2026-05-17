@@ -1,0 +1,103 @@
+<templates xml:space="preserve">
+
+    <t t-name="l10n_ve_tax.TaxTotalsField" t-inherit="account.TaxTotalsField" t-inherit-mode="extension" owl="1">
+        <xpath expr="//table/tbody/t[@t-foreach]" position="before">
+            <tr t-if="totals.discount_amount and totals.show_discount">
+                <td class="o_td_label">
+                    <label class="o_form_label o_tax_total_label">Subtotal</label>
+                </td>
+                <td>
+                    <span
+                        name="subtotal"
+                        class="o_tax_group_amount_value o_list_monetary"
+                        t-out="totals.formatted_subtotal"
+                    />
+                </td>
+            </tr>
+            <tr t-if="totals.discount_amount and totals.show_discount">
+                <td class="o_td_label">
+                    <label class="o_form_label o_tax_total_label">Discount</label>
+                </td>
+                <td class="o_tax_group">
+                    <span
+                        name="discount_amount"
+                        class="o_tax_group_amount_value o_list_monetary"
+                        t-out="totals.formatted_discount_amount"
+                    />
+                </td>
+            </tr>
+        </xpath>
+    </t>
+
+    <t t-name="l10n_ve_tax.TaxForeignTotalsField" owl="1">
+        <table t-if="totals" class="float-end">
+            <tbody>
+                <tr t-if="totals.foreign_discount_amount and totals.show_discount">
+                    <td class="o_td_label">
+                        <label class="o_form_label o_tax_total_label">Subtotal</label>
+                    </td>
+                    <td>
+                        <span
+                            name="foreign_amount_untaxed"
+                            class="o_tax_group_amount_value o_list_monetary"
+                            t-out="totals.foreign_formatted_subtotal"
+                        />
+                    </td>
+                </tr>
+                <tr t-if="totals.foreign_discount_amount and totals.show_discount">
+                    <td class="o_td_label">
+                        <label class="o_form_label o_tax_total_label">Discount</label>
+                    </td>
+                    <td class="o_tax_group">
+                        <span
+                            name="foreign_discount_amount"
+                            class="o_tax_group_amount_value o_list_monetary"
+                            t-out="totals.foreign_formatted_discount_amount"
+                        />
+                    </td>
+                </tr>
+
+                <t t-foreach="totals.foreign_subtotals" t-as="subtotal" t-key="subtotal_index">
+                    <tr>
+                        <td class="o_td_label">
+                            <label class="o_form_label o_tax_total_label" t-out="subtotal.name"/>
+                        </td>
+
+                        <td class="o_list_monetary">
+                            <span t-att-name="subtotal.name"
+                                  style="white-space: nowrap; font-weight: bold;"
+                                  t-out="subtotal.formatted_base_amount_foreign_currency || formatMonetary(subtotal.base_amount_currency)"/>
+                        </td>
+                    </tr>
+
+                    <t t-foreach="subtotal.tax_groups" t-as="taxGroup" t-key="taxGroup_index">
+                        <TaxGroupComponent
+                            totals="totals"
+                            subtotal="subtotal"
+                            taxGroup="taxGroup"
+                            isReadonly="readonly"
+                            onChangeTaxGroup.bind="_onChangeTaxValueByTaxGroup"
+                            invalidate.bind="invalidate"
+                        />
+                    </t>
+                </t>
+
+                <!-- Total amount with all taxes-->
+                <tr>
+                    <td class="o_td_label">
+                        <label class="o_form_label o_tax_total_label">Total</label>
+                    </td>
+
+                    <td class="o_list_monetary">
+                        <span
+                            name="foreign_amount_total"
+                            t-att-class="totals.has_tax_groups ? 'oe_subtotal_footer_separator' : ''"
+                            t-out="totals.foreign_formatted_amount_total"
+                            style="font-size: 1.3em; font-weight: bold; white-space: nowrap;"
+                        />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </t>
+</templates>
