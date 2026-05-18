@@ -2,7 +2,7 @@ import logging
 import re
 from odoo import models, fields, api, _
 from odoo.exceptions import MissingError, ValidationError
-from ...tools import binaural_cne_query
+from odoo.addons.l10n_ve_tools.tools import binaural_cne_query
 
 _logger = logging.getLogger(__name__)
 
@@ -134,17 +134,16 @@ class ResPartner(models.Model):
         """
         for vals in vals_list:
             if vals.get("vat") and not vals.get("name", False):
-                prefix_vat = vals.get("prefix_vat")
+                prefix_vat = vals.get("prefix_vat") or "V"
                 name = vals.get("name")
                 vat = vals.get("vat")
-                if prefix_vat == "V" and not name and prefix_vat in ["V", "E"]:
+                if prefix_vat in ["V", "E"] and not name:
                     name, flag = binaural_cne_query.get_default_name_by_vat(
                         self, prefix_vat, vat
                     )
-                    if not flag:
-                        continue
-                    vals["name"] = name
-            if "vat" and "prefix_vat" in vals:
+                    if flag and name:
+                        vals["name"] = name
+            if "vat" in vals or "prefix_vat" in vals:
                 self.check_duplicate_vat(
                     vals.get("prefix_vat"), vals.get("vat"))
             if "email" in vals:
@@ -153,21 +152,21 @@ class ResPartner(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        if "prefix_vat" and "vat" in vals:
+        if "prefix_vat" in vals or "vat" in vals:
             for record in self:
-                record.check_duplicate_vat(
-                    vals.get("prefix_vat"), vals.get("vat"))
+                record.check_duplicate_vat(record.prefix_vat, record.vat)
         if "email" in vals:
             for record in self:
-                record.check_duplicate_email(vals.get("email"))
+                record.check_duplicate_email(record.email)
         return res
 
     def _check_vat(self):
         pattern = "^[0-9]*$"
         for record in self:
-            if record.vat:
+            if record.vat and record.country_id.code == 'VE':
                 if not re.match(pattern, record.vat):
-                    raise MissingError(_("The vat field only accepts numbers"))
+                    raise ValidationError(_("The vat field only accepts numbers"))
+        return super()._check_vat()
 
     @api.onchange("vat", "prefix_vat")
     def _onchange_(self):

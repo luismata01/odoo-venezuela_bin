@@ -40,7 +40,7 @@ class TestResPartner(TransactionCase):
 
     def test_check_vat_invalid_characters(self):
         self.partner.vat = "12A34"
-        with self.assertRaises(MissingError):
+        with self.assertRaises(ValidationError):
             self.partner._check_vat()
 
     def test_check_vat_valid(self):
