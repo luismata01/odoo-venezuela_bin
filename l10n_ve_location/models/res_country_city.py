@@ -1,5 +1,4 @@
-from odoo import fields, models, api, _
-from odoo.exceptions import ValidationError
+from odoo import fields, models
 
 
 class ResCountryCityBinauralLocalizacion(models.Model):
@@ -13,16 +12,7 @@ class ResCountryCityBinauralLocalizacion(models.Model):
 
     name = fields.Char(string="City", required=True)
 
-    @api.constrains("name", "country_id", "state_id")
-    def _check_unique_city(self):
-        for city in self:
-            existing = self.search([
-                ("name", "=", city.name),
-                ("country_id", "=", city.country_id.id),
-                ("state_id", "=", city.state_id.id),
-                ("id", "!=", city.id),
-            ])
-            if existing:
-                raise ValidationError(_(
-                    "You cannot register a city with the same name for the selected state and country"
-                ))
+    _name_uniq = models.Constraint(
+        "unique (name, country_id, state_id)",
+        "You cannot register a city with the same name for the selected state and country",
+    )
