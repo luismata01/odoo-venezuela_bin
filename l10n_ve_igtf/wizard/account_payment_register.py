@@ -102,10 +102,12 @@ class AccountPaymentRegisterIgtf(models.TransientModel):
         Overridden to ensure that we always get the moves from the context,
         even if we are in edit mode.
         """
-        ids=self.env.context.get("active_id") or self.env.context.get("active_ids")
+        ids = self.env.context.get("active_id") or self.env.context.get("active_ids")
 
         if isinstance(ids, int):
             return self.env["account.move"].browse([ids])
+        elif self.env.context.get("active_model") == "account.move":
+            return set(self.env["account.move"].browse(ids))
         else:
             move_lines = self.env["account.move.line"].browse(ids)
             return set(move_lines.mapped("move_id"))

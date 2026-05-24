@@ -29,10 +29,30 @@ class TestIgtfInternationalException(TransactionCase):
             "company_ids": [(4, company.id)],
         })
 
-        # Configura cuentas IGTF en la compañía (necesarias para el cálculo)
+        # ── Cuentas de anticipo ──────────────────────────────────────────────
+        cls.advance_customer_account = cls.env["account.account"].create({
+            "name": "Advance Customer Test",
+            "code": "TEST.ADV.CUST",
+            "account_type": "liability_current",
+            "company_ids": [(4, company.id)],
+            "reconcile": True,
+            "is_advance_account": True,
+        })
+        cls.advance_supplier_account = cls.env["account.account"].create({
+            "name": "Advance Supplier Test",
+            "code": "TEST.ADV.SUPP",
+            "account_type": "asset_current",
+            "company_ids": [(4, company.id)],
+            "reconcile": True,
+            "is_advance_account": True,
+        })
+
+        # Configura cuentas IGTF y anticipo en la compañía (necesarias para el cálculo)
         company.write({
             "supplier_account_igtf_id": cls.igtf_account.id,
             "customer_account_igtf_id": cls.igtf_account.id,
+            "advance_customer_account_id": cls.advance_customer_account.id,
+            "advance_supplier_account_id": cls.advance_supplier_account.id,
         })
 
         # ── Diario de pago con IGTF activo  ─────────────────────────────────
@@ -115,6 +135,7 @@ class TestIgtfInternationalException(TransactionCase):
             "move_type": "in_invoice",
             "partner_id": self.partner.id,
             "journal_id": journal.id,
+            "currency_id": self.env.ref("base.USD").id,
             "invoice_line_ids": [(0, 0, {
                 "name": "Servicio Internacional",
                 "product_id": self.product.id,
@@ -135,6 +156,7 @@ class TestIgtfInternationalException(TransactionCase):
             active_ids=[invoice.id],
         ).create({
             "journal_id": self.igtf_payment_journal.id,
+            "currency_id": self.igtf_payment_journal.currency_id.id or self.env.company.currency_id.id,
         })
 
     # ── Tests ─────────────────────────────────────────────────────────────────
