@@ -19,15 +19,16 @@ class ResCompany(models.Model):
         before_currency = self.foreign_currency_id
         res = super().write(vals)
         if "foreign_currency_id" in vals and before_currency:
-            lines = self.env["account.move.line"].search(
-                [("foreign_currency_id", "=", before_currency.id)]
-            )
-            if lines:
-                raise ValidationError(
-                    _(
-                        "The currency already has accounting movements, you cannot deactivate this foreign currency"
-                    )
+            if "account.move.line" in self.env:
+                lines = self.env["account.move.line"].search(
+                    [("foreign_currency_id", "=", before_currency.id)]
                 )
+                if lines:
+                    raise ValidationError(
+                        _(
+                            "The currency already has accounting movements, you cannot deactivate this foreign currency"
+                        )
+                    )
         return res
 
     @api.constrains("foreign_currency_id", "currency_id")
