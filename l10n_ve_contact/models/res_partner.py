@@ -148,7 +148,7 @@ class ResPartner(models.Model):
                     vals.get("prefix_vat"), vals.get("vat"))
             if "email" in vals:
                 self.check_duplicate_email(vals.get("email"))
-        return super(ResPartner, self).create(vals_list)
+        return super().create(vals_list)
 
     def write(self, vals):
         res = super().write(vals)
