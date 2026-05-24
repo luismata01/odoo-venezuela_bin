@@ -12,7 +12,7 @@ class AccountChangeLockDate(models.TransientModel):
     _inherit = "account.change.lock.date"
 
     def change_lock_date(self):
-        res = super(AccountChangeLockDate, self).change_lock_date()
+        res = super().change_lock_date()
         if self.tax_lock_date:
             adjusted_lock_date = self.tax_lock_date + timedelta(days=1)
             sale_orders = self.env["sale.order"].search(

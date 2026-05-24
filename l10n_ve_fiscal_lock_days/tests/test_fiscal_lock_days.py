@@ -22,7 +22,7 @@ class TestFiscalLockDays(TransactionCase):
             'type': 'sale',
             'company_id': self.company.id,
         })
-        self.tax_group_iva16 = self.env["account.tax.group"].create({"name": "IVA 16%"})
+        self.tax_group_iva16 = self.env["account.tax.group"].create({"name": "IVA 16%", "country_id": self.company.country_id.id})
         self.tax_iva16 = self.env['account.tax'].create({
             'name': 'IVA 16%',
             'amount': 16,
