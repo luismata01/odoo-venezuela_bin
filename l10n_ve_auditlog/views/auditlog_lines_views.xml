@@ -3,11 +3,10 @@
     <field name="name">mail.tracking.value.audit.logs</field>
     <field name="model">mail.tracking.value</field>
     <field name="arch" type="xml">
-      <tree string="Audit logs lines">
-        <field name="model" />
-        <field name="field" />
-        <field name="author_id" />
-        <field name="field_type" />
+      <list string="Audit logs lines">
+        <field name="mail_message_id" />
+        <field name="field_id" />
+        <field name="currency_id" />
         <field name="new_value_char" />
         <field name="old_value_char" />
         <field name="new_value_datetime" />
@@ -18,9 +17,7 @@
         <field name="old_value_integer" />
         <field name="new_value_text" />
         <field name="old_value_text" />
-        <field name="new_value_monetary" />
-        <field name="old_value_monetary" />
-      </tree>
+      </list>
     </field>
   </record>
 
@@ -40,6 +37,6 @@
     <field name="name">Audit logs lines</field>
     <field name="res_model">mail.tracking.value</field>
     <field name="view_mode">list,form</field>
-    <field name="domain">[('model', 'in', ('account.move','account.payment','account.retention'))]</field>
+    <field name="domain">[('mail_message_id.model', 'in', ('account.move','account.payment','account.retention'))]</field>
   </record>
 </odoo>
