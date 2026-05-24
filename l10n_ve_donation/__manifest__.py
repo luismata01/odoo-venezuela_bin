@@ -3,8 +3,9 @@
     "version": "19.0.1.0.0",
     "category": "Accounting/Accounting",
     "summary": "Venezuela - Donaciones",
-    "author": "",
-    "website": "",
+    "author": "binaural-dev",
+    "website": "https://binauraldev.com/",
+    "license": "LGPL-3",
     "depends": [
         "l10n_ve_accountant",
         "l10n_ve_stock",
