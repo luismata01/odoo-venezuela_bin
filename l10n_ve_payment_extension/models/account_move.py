@@ -374,15 +374,16 @@ class AccountMoveRetention(models.Model):
 
         Payment = self.env["account.payment"]
         Retention = self.env["account.retention"]
+        journal = journals[type_retention]
+        payment_method = self.env.ref("account.account_payment_method_manual_in")
+        payment_method_line = journal._get_available_payment_method_lines(payment_type).filtered(lambda l: l.payment_method_id == payment_method)[:1]
         payment_vals = {
             "payment_type": payment_type,
             "partner_type": "supplier",
             "partner_id": self.partner_id.id,
-            "journal_id": journals[type_retention].id,
+            "journal_id": journal.id,
             "payment_type_retention": type_retention,
-            "payment_method_id": self.env.ref(
-                "account.account_payment_method_manual_in"
-            ).id,
+            "payment_method_line_id": payment_method_line.id,
             "is_retention": True,
             "foreign_rate": self.foreign_rate,
             "foreign_inverse_rate": self.foreign_inverse_rate,

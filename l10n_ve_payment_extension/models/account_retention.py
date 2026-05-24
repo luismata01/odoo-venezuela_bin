@@ -568,15 +568,19 @@ class AccountRetention(models.Model):
         Payment = self.env["account.payment"]
         Rate = self.env["res.currency.rate"]
         payment_vals["partner_type"] = "supplier"
-        payment_vals["journal_id"] = (
-            self.env.company.iva_supplier_retention_journal_id.id
-        )
+        journal = self.env.company.iva_supplier_retention_journal_id
+        payment_vals["journal_id"] = journal.id
         in_refund_lines = self.retention_line_ids.filtered(
             lambda l: l.move_id.move_type == "in_refund"
         )
         in_invoice_lines = self.retention_line_ids.filtered(
             lambda l: l.move_id.move_type == "in_invoice"
         )
+
+        inbound_method = self.env.ref("account.account_payment_method_manual_in")
+        outbound_method = self.env.ref("account.account_payment_method_manual_out")
+        inbound_line = journal._get_available_payment_method_lines("inbound").filtered(lambda l: l.payment_method_id == inbound_method)[:1]
+        outbound_line = journal._get_available_payment_method_lines("outbound").filtered(lambda l: l.payment_method_id == outbound_method)[:1]
 
         in_refunds_dict = defaultdict(account_retention_line_empty_recordset)
         in_invoices_dict = defaultdict(account_retention_line_empty_recordset)
@@ -587,9 +591,7 @@ class AccountRetention(models.Model):
             in_invoices_dict[line.move_id] += line
 
         for lines in in_refunds_dict.values():
-            payment_vals["payment_method_id"] = (
-                self.env.ref("account.account_payment_method_manual_in").id,
-            )
+            payment_vals["payment_method_line_id"] = inbound_line.id
             payment_vals["payment_type"] = "inbound"
             payment_vals["foreign_rate"] = lines[0].foreign_currency_rate
             payment = Payment.create(payment_vals)
@@ -603,9 +605,7 @@ class AccountRetention(models.Model):
             lines.write({"payment_id": payment.id})
             payment.compute_retention_amount_from_retention_lines()
         for lines in in_invoices_dict.values():
-            payment_vals["payment_method_id"] = (
-                self.env.ref("account.account_payment_method_manual_out").id,
-            )
+            payment_vals["payment_method_line_id"] = outbound_line.id
             payment_vals["payment_type"] = "outbound"
             if 'subsidiary' in self.env.company._fields:
                 if self.env.company.subsidiary:
@@ -631,15 +631,19 @@ class AccountRetention(models.Model):
         Payment = self.env["account.payment"]
         Rate = self.env["res.currency.rate"]
         payment_vals["partner_type"] = "customer"
-        payment_vals["journal_id"] = (
-            self.env.company.iva_customer_retention_journal_id.id
-        )
+        journal = self.env.company.iva_customer_retention_journal_id
+        payment_vals["journal_id"] = journal.id
         out_refund_lines = self.retention_line_ids.filtered(
             lambda l: l.move_id.move_type == "out_refund"
         )
         out_invoice_lines = self.retention_line_ids.filtered(
             lambda l: l.move_id.move_type == "out_invoice"
         )
+
+        inbound_method = self.env.ref("account.account_payment_method_manual_in")
+        outbound_method = self.env.ref("account.account_payment_method_manual_out")
+        inbound_line = journal._get_available_payment_method_lines("inbound").filtered(lambda l: l.payment_method_id == inbound_method)[:1]
+        outbound_line = journal._get_available_payment_method_lines("outbound").filtered(lambda l: l.payment_method_id == outbound_method)[:1]
 
         out_refunds_dict = defaultdict(account_retention_line_empty_recordset)
         out_invoices_dict = defaultdict(account_retention_line_empty_recordset)
@@ -650,9 +654,7 @@ class AccountRetention(models.Model):
             out_invoices_dict[line.move_id] += line
 
         for lines in out_refunds_dict.values():
-            payment_vals["payment_method_id"] = (
-                self.env.ref("account.account_payment_method_manual_out").id,
-            )
+            payment_vals["payment_method_line_id"] = outbound_line.id
             payment_vals["payment_type"] = "outbound"
             payment_vals["foreign_rate"] = lines[0].foreign_currency_rate
             payment = Payment.create(payment_vals)
@@ -666,9 +668,7 @@ class AccountRetention(models.Model):
             lines.write({"payment_id": payment.id})
             payment.compute_retention_amount_from_retention_lines()
         for lines in out_invoices_dict.values():
-            payment_vals["payment_method_id"] = (
-                self.env.ref("account.account_payment_method_manual_in").id,
-            )
+            payment_vals["payment_method_line_id"] = inbound_line.id
             payment_vals["payment_type"] = "inbound"
             payment_vals["foreign_rate"] = lines[0].foreign_currency_rate
             if 'subsidiary' in self.env.company._fields:
@@ -887,7 +887,8 @@ class AccountRetention(models.Model):
                 "out_invoice",
             ): self.env.company.municipal_customer_retention_journal_id,
         }
-        journal_id = journals[(self.type_retention, self.type)].id
+        journal = journals[(self.type_retention, self.type)]
+        journal_id = journal.id
 
         if self.type_retention == "islr":
             self._validate_islr_retention_fields()
@@ -896,17 +897,21 @@ class AccountRetention(models.Model):
         partner_type = "supplier" if self.type == "in_invoice" else "customer"
         payment_vals = []
 
+        inbound_method = self.env.ref("account.account_payment_method_manual_in")
+        outbound_method = self.env.ref("account.account_payment_method_manual_out")
+
         for line in self.retention_line_ids:
             if line.move_id.move_type == "in_refund":
                 payment_type = "inbound" if self.type == "in_invoice" else "outbound"
             if line.move_id.move_type == "out_refund":
                 payment_type = "outbound" if self.type == "out_invoice" else "inbound"
 
-            payment_method_ref = (
-                "account.account_payment_method_manual_in"
+            payment_method = (
+                inbound_method
                 if payment_type == "inbound"
-                else "account.account_payment_method_manual_out"
+                else outbound_method
             )
+            payment_method_line = journal._get_available_payment_method_lines(payment_type).filtered(lambda l: l.payment_method_id == payment_method)[:1]
 
             payment_vals.append(
                 {
@@ -916,7 +921,7 @@ class AccountRetention(models.Model):
                     "partner_id": line.move_id.partner_id.id,
                     "journal_id": journal_id,
                     "payment_type_retention": self.type_retention,
-                    "payment_method_id": self.env.ref(payment_method_ref).id,
+                    "payment_method_line_id": payment_method_line.id,
                     "is_retention": True,
                     "foreign_rate": line.move_id.foreign_rate,
                     "foreign_inverse_rate": line.move_id.foreign_inverse_rate,
