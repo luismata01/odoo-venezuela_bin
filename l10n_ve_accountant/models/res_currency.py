@@ -13,6 +13,7 @@ class ResCurrency(models.Model):
         compute="_compute_edit_rate",
     )
 
+    @api.depends_context('company')
     def _compute_edit_rate(self):
         for record in self:
             record.edit_rate = (

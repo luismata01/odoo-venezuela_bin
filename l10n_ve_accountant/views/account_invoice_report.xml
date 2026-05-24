@@ -42,8 +42,10 @@
                 <group position="inside">
                     <filter name="foreign_subtotal" string="Foreign Total Billed" domain="[]" context="{'group_by':'foreign_subtotal'}"/>
                     <filter name="foreign_rate" string="Foreign Rate" domain="[]" context="{'group_by':'foreign_rate'}"/>
-                    <field name="foreign_price_total" string="Foreign price total" />
                 </group>
+                <field name="foreign_price_total" position="attributes">
+                    <attribute name="string">Foreign price total</attribute>
+                </field>
 
             </field>
 

@@ -12,16 +12,22 @@ class TestForeignBalance(TransactionCase):
         super().setUp()
 
         self.currency_usd = self.env.ref("base.USD")
+        self.currency_usd.active = True
         self.currency_vef = self.env.ref("base.VEF")
+        self.currency_vef.active = True
         self.currency_eur = self.env.ref("base.EUR")
         self.currency_eur.active = True
         self.company = self.env.ref("base.main_company")
         self.country_ve = self.env.ref("base.ve")
         
-        # Configure company: Base VEF, Foreign USD
+        # Configure company: Base VEF, Foreign USD (bypassing ORM validation via SQL)
+        self.env.cr.execute(
+            "UPDATE res_company SET currency_id = %s WHERE id = %s",
+            (self.currency_vef.id, self.company.id)
+        )
+        self.company.invalidate_recordset(["currency_id"])
         self.company.write(
             {
-                "currency_id": self.currency_vef.id,
                 "foreign_currency_id": self.currency_usd.id,
                 "account_fiscal_country_id": self.country_ve.id,
                 "country_id": self.country_ve.id,

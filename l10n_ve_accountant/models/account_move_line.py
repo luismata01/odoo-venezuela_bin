@@ -82,6 +82,7 @@ class AccountMoveLine(models.Model):
             else:
                 line.price_unit_ves = line.price_unit / line.currency_id.rate
 
+    @api.depends("currency_id")
     def _compute_ves_currency_id(self):
         ves_currency = self.env["res.currency"].search([("name", "=", "VES")], limit=1)
         for line in self:

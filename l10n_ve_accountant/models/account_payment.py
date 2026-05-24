@@ -156,7 +156,7 @@ class AccountPayment(models.Model):
 
     def _synchronize_to_moves(self, changed_fields):
         """
-        Override the _syncrhonize_to_moves method to set the rate of the payment to its move.
+        Override the _synchronize_to_moves method to set the rate of the payment to its move.
         """
         res = super()._synchronize_to_moves(changed_fields)
         if not (

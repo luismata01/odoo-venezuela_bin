@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from lxml import etree
 from contextlib import ExitStack, contextmanager
-from odoo import _, api, fields, models,Command
+from odoo import _, api, fields, models, Command
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_compare, index_exists
 from odoo.tools.sql import drop_index
@@ -33,19 +33,6 @@ class AccountMove(models.Model):
         """
         self.ensure_one()
         return self.invoice_date_display or self.date
-
-    _sql_constraints = [
-        (
-            "unique_name",
-            "",
-            "Another entry with the same name already exists.",
-        ),
-        (
-            "unique_name_ve",
-            "",
-            "Another entry with the same name already exists.",
-        ),
-    ]
 
     company_currency_rate = fields.Float(
         string="Tasa de moneda de la compañía",
@@ -168,20 +155,6 @@ class AccountMove(models.Model):
         )
         return rate_values.get("foreign_rate", 0)
 
-    def default_rate(self):
-        """
-        This method is used to get the rate of the payment.
-
-        Returns
-        -------
-        type = float
-            The rate of the payment
-        """
-        rate_values = self.env["res.currency.rate"].compute_rate(
-            self.currency_id.id or self.env.ref("base.VEF").id,
-            fields.Date.today(),
-        )
-        return rate_values.get("foreign_rate", 0)
 
     foreign_rate = fields.Float(
         compute="_compute_rate",
@@ -252,19 +225,6 @@ class AccountMove(models.Model):
         store=True,
     )
 
-    _sql_constraints = [
-        (
-            "unique_name",
-            "",
-            "Another entry with the same name already exists.",
-        ),
-        (
-            "unique_name_ve",
-            "",
-            "Another entry with the same name already exists.",
-        ),
-    ]
-
     detailed_amounts = fields.Binary(compute="_compute_detailed_amounts")
 
     foreign_debit = fields.Monetary(
@@ -329,10 +289,6 @@ class AccountMove(models.Model):
 
     is_reset_to_draft_for_price_change = fields.Boolean(copy=False)
 
-    @api.model
-    def search_read(self, domain=None, fields=None, offset=0, limit=None, order=None):
-        context = self.with_context(active_test=False)
-        return super(AccountMove, context).search_read(domain, fields, offset, limit, order)
     
     @api.depends('tax_totals')
     def _compute_foreign_untaxed_total(self):

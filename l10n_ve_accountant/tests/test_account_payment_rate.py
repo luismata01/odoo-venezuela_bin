@@ -121,7 +121,7 @@ class TestAccountPaymentRate(TransactionCase):
             "partner_type": "customer",
             "partner_id": self.partner.id,
             "journal_id": self.bank_journal.id,
-            "payment_method_id": payment_method_manual.id,
+            "payment_method_line_id": payment_method_manual.id,
         })
         
         payment._compute_other_rate()

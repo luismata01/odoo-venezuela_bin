@@ -5,7 +5,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-class AccountPaymenTerm(models.Model):
+class AccountPaymentTerm(models.Model):
     _inherit = "account.payment.term"
 
     # QUE PLANTEAR
