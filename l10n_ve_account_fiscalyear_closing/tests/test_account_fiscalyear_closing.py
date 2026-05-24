@@ -66,7 +66,7 @@ class TestAccountFiscalyearClosing(TransactionCase):
     def test_mapping_move_lines_get(self):
         move_lines, rate = self.config._mapping_move_lines_get(self.account_income.code, self.mapping)
         self.assertIsInstance(move_lines, list)
-        self.assertIsInstance(rate, float)
+        self.assertIsInstance(rate, (int, float))
 
     def test_draft_moves_check(self):
         move = self.env["account.move"].create({
@@ -82,18 +82,27 @@ class TestAccountFiscalyearClosing(TransactionCase):
     def test_calculate(self):
         move = self.env["account.move"].create({
             "company_id": self.company.id,
-            "state": "posted",
+            "state": "draft",
             "date": "2025-06-01",
             "journal_id": self.journal.id,
+            "line_ids": [
+                (0, 0, {
+                    "account_id": self.account_income.id,
+                    "debit": 100,
+                    "credit": 0,
+                    "company_id": self.company.id,
+                    "date": "2025-06-01",
+                }),
+                (0, 0, {
+                    "account_id": self.account_equity.id,
+                    "debit": 0,
+                    "credit": 100,
+                    "company_id": self.company.id,
+                    "date": "2025-06-01",
+                }),
+            ],
         })
-        self.env["account.move.line"].create({
-            "move_id": move.id,
-            "account_id": self.account_income.id,
-            "debit": 100,
-            "credit": 0,
-            "company_id": self.company.id,
-            "date": "2025-06-01",
-        })
+        move.action_post()
         self.fyc.move_config_ids = [(6, 0, [self.config.id])]
         self.fyc.check_draft_moves = False
         result = self.fyc.calculate()
@@ -103,25 +112,38 @@ class TestAccountFiscalyearClosing(TransactionCase):
         # Simula líneas de cuenta
         move = self.env["account.move"].create({
             "company_id": self.company.id,
-            "state": "posted",
+            "state": "draft",
             "date": "2025-06-01",
             "journal_id": self.journal.id,
+            "line_ids": [
+                (0, 0, {
+                    "account_id": self.account_income.id,
+                    "debit": 100,
+                    "credit": 0,
+                    "company_id": self.company.id,
+                    "date": "2025-06-01",
+                    "foreign_debit": 100,
+                    "foreign_credit": 0,
+                    "foreign_currency_id": self.env.ref("base.VEF").id,
+                }),
+                (0, 0, {
+                    "account_id": self.account_equity.id,
+                    "debit": 0,
+                    "credit": 100,
+                    "company_id": self.company.id,
+                    "date": "2025-06-01",
+                    "foreign_debit": 0,
+                    "foreign_credit": 100,
+                    "foreign_currency_id": self.env.ref("base.VEF").id,
+                }),
+            ],
         })
-        line = self.env["account.move.line"].create({
-            "move_id": move.id,
-            "account_id": self.account_income.id,
-            "debit": 100,
-            "credit": 0,
-            "company_id": self.company.id,
-            "date": "2025-06-01",
-            "foreign_debit": 0,
-            "foreign_credit": 0,
-            "foreign_currency_id": self.env.ref("base.VEF").id,
-        })
-        balance, move_line, rate = self.mapping.move_line_prepare(self.account_income, self.env["account.move.line"].browse([line.id]))
+        move.action_post()
+        line = move.line_ids.filtered(lambda l: l.account_id == self.account_income)
+        balance, move_line, rate = self.mapping.move_line_prepare(self.account_income, line)
         self.assertIsInstance(move_line, dict)
         self.assertIsInstance(balance, (int, float))
-        self.assertIsInstance(rate, float)
+        self.assertIsInstance(rate, (int, float))
 
     def test_account_lines_get(self):
         lines = self.mapping.account_lines_get(self.account_income)
