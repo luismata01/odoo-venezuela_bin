@@ -16,7 +16,7 @@ class TestWizardStockBookReport(TransactionCase):
         super().setUpClass()
         cls.company = cls.env.company
         cls.uom_unit = cls.env.ref("uom.product_uom_unit")
-        cls.category_all = cls.env.ref("product.product_category_all")
+        cls.category_all = cls.env.ref("product.product_category_services")
         cls.location_stock = cls.env.ref("stock.stock_location_stock")
         cls.location_supplier = cls.env.ref("stock.stock_location_suppliers")
         cls.location_customer = cls.env.ref("stock.stock_location_customers")
