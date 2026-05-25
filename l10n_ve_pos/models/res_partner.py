@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from ...tools import binaural_cne_query
+from odoo.addons.l10n_ve_tools.tools import binaural_cne_query
 from odoo.exceptions import MissingError
 
 
