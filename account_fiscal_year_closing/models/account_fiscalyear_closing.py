@@ -376,7 +376,7 @@ class AccountFiscalyearClosingConfig(models.Model):
 
     _code_uniq = models.Constraint(
         "UNIQUE (code, fyc_id)",
-        _("Code must be unique per fiscal year closing!"),
+        "Code must be unique per fiscal year closing!",
     )
 
     def config_inverse_get(self):
