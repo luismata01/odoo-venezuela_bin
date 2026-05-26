@@ -93,7 +93,7 @@ TAX = {
 
 class BinauralDriverController(DriverController):
     @http.route(
-        "/hw_drivers/event", type="json", auth="none", cors="*", csrf=False, save_session=False
+        "/hw_drivers/event", type="jsonrpc", auth="none", cors="*", csrf=False, save_session=False
     )
     def event(self, listener):
         """
