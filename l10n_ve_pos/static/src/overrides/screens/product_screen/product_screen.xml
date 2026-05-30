@@ -1,7 +1,9 @@
 <templates id="template" xml:space="preserve">
-    <t t-name="l10n_ve_pos.ProductScreen" t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension">
+    <!-- DESACTIVADO para Odoo 19: ProductCard en Odoo 19 tiene validación estricta de props
+         y qty_available no es una prop válida del componente. -->
+    <!-- <t t-name="l10n_ve_pos.ProductScreen" t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension">
         <xpath expr="//ProductCard" position="attributes">
             <attribute name="qty_available">product.qty_available</attribute>
         </xpath>
-    </t>
+    </t> -->
 </templates>

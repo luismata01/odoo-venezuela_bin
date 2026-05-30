@@ -1,16 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templates id="l10n_ve_pos_orderwidget_props" xml:space="preserve">
-  <t t-inherit="point_of_sale.OrderSummary" t-inherit-mode="extension">
-    <xpath expr="//OrderDisplay" position="attributes">
-            <attribute name="conversion_rate">currentOrder.get_conversion_rate()</attribute>
-            <attribute name="quantity_products">currentOrder.get_qty_products()</attribute>
-            <attribute name="foreign_total">env.utils.formatForeignCurrency(currentOrder.get_foreign_total_with_tax())</attribute>
-            <!-- 
-            <attribute name="foreign_tax">!env.utils.floatIsZero(currentOrder.get_foreign_total_tax()) and env.utils.formatForeignCurrency(currentOrder.get_foreign_total_tax()) or ''</attribute>
-            <attribute name="quantity_products">currentOrder.get_qty_products()</attribute>
-        <xpath expr="//ProductCard" position="attributes">
-            <attribute name="qty_available">product.qty_available</attribute>
-        </xpath> -->
+<templates id="template" xml:space="preserve">
+  <t t-name="l10n_ve_pos.OrderSummary" t-inherit="point_of_sale.OrderSummary" t-inherit-mode="extension">
+    <xpath expr="//t[@t-set-slot='details']" position="replace">
+      <t t-set-slot="details">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; text-align: left; font-size: 80%; padding: 8px;">
+          <div style="flex: 1;">
+            <div class="rate_bcv" t-if="currentOrder.config?.foreign_rate">
+              Tasa BCV: <t t-out="currentOrder.config.foreign_rate"/>
+            </div>
+            <div class="cant_prod">
+              Total de productos: <t t-out="currentOrder.get_qty_products()"/>
+            </div>
+          </div>
+          <div style="width: 1px; background-color: #ddd; margin: 0 10px;"></div>
+          <div style="flex: 1; text-align: right;">
+            <div class="total">
+              Total:
+              <span t-out="env.utils.formatForeignCurrency(currentOrder.get_foreign_total_with_tax())" class="total"/>
+            </div>
+            <div t-if="currentOrder.get_foreign_total_tax()" class="fs-6 text-muted subentry">
+              Taxes: <span t-out="env.utils.formatForeignCurrency(currentOrder.get_foreign_total_tax())" class="tax"/>
+            </div>
+          </div>
+        </div>
+      </t>
     </xpath>
-    </t>
+  </t>
 </templates>

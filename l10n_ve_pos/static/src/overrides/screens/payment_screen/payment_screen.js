@@ -28,7 +28,7 @@ patch(PaymentScreen.prototype, {
     } // do nothing if no selected payment line
 
     // >>  BINAURAL
-    if (!this.selectedPaymentLine.payment_method.is_foreign_currency) {
+    if (!this.selectedPaymentLine.payment_method?.is_foreign_currency) {
       return super.updateSelectedPaymentline(amount);
     }
 
@@ -43,7 +43,7 @@ patch(PaymentScreen.prototype, {
     }
 
     // disable changing amount on paymentlines with running or done payments on a payment terminal
-    const payment_terminal = this.selectedPaymentLine.payment_method.payment_terminal;
+    const payment_terminal = this.selectedPaymentLine.payment_method?.payment_terminal;
     const hasCashPaymentMethod = this.payment_methods_from_config.some(
       (method) => method.type === "cash"
     );
@@ -94,7 +94,7 @@ patch(PaymentScreen.prototype, {
   },
   async showPaymentsOrigin() {
     let id = []
-    if (Object.values(this.pos.toRefundLines).length == 0) {
+    if (!this.pos.toRefundLines || Object.values(this.pos.toRefundLines).length == 0) {
       return
     }
     Object.values(this.pos.toRefundLines).forEach(el => {

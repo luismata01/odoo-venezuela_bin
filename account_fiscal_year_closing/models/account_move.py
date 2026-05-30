@@ -27,5 +27,4 @@ class AccountMove(models.Model):
     closing_type = fields.Selection(
         selection=_selection_closing_type,
         default="none",
-        states={"posted": [("readonly", True)]},
     )

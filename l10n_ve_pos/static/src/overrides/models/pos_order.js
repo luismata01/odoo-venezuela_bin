@@ -13,25 +13,11 @@ import {
 
 // New orders are now associated with the current table, if any.
 patch(PosOrder.prototype, {
-  setup() {
-      super.setup(...arguments);
-//   this.set_to_invoice(true);
-//   if (props.json) {
-//     if (props.json.account_move === undefined) {
-//       this.set_to_invoice(true);
-//       this.lock_toggle_receipt_invoice = false;
-//     }
-//     this.reload_taxes();
-//   } else {
-//     let always_invoice = !this.pos.config.always_invoice;
-//     this.to_receipt = always_invoice;
-//   }
-},
 get_foreign_currency(){
         return this.config.foreign_currency_id;
     },
- get_display_rate() {
-    return this.env.pos.config.foreign_rate;
+  get_display_rate() {
+    return this.config.foreign_rate || this.config.foreign_inverse_rate || 0;
   },
 
 //   _isValidEmptyOrder() {

@@ -36,7 +36,7 @@ class PosConfig(models.Model):
     )
     validate_phone_in_pos = fields.Boolean(default=False)
 
-    @api.depends("foreign_currency_id", "foreign_inverse_rate", "foreign_rate")
+    @api.depends("foreign_currency_id")
     def _compute_rate(self):
         """
         Compute the rate of the pos using the compute_rate method of the res.currency.rate model.

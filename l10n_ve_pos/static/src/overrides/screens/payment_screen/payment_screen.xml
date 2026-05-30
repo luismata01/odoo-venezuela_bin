@@ -1,4 +1,9 @@
 <templates id="template" xml:space="preserve">
+    <!-- DESACTIVADO para Odoo 19: PaymentScreen fue completamente reescrito en Odoo 19.
+         PaymentScreenPaymentLines ahora requiere la prop obligatoria `isRefundOrder`.
+         Este override la insertaba en la ubicación incorrecta (dentro de PaymentScreenMethods)
+         sin esa prop, causando OwlError: validateProps. -->
+    <!--
     <t t-name="l10n_ve_pos.PaymentScreenMethods" t-inherit="point_of_sale.PaymentScreenMethods" t-inherit-mode="extension">
         <xpath expr="//PaymentScreenPaymentLines" position="replace">
         </xpath>
@@ -6,5 +11,5 @@
             <PaymentScreenPaymentLines paymentLines="paymentLines" deleteLine.bind="deletePaymentLine" sendForceDone.bind="sendForceDone" sendPaymentReverse.bind="sendPaymentReverse" sendPaymentCancel.bind="sendPaymentCancel" sendPaymentRequest.bind="sendPaymentRequest" selectLine.bind="selectPaymentLine" updateSelectedPaymentline.bind="updateSelectedPaymentline" />
         </xpath>
     </t>
-
+    -->
 </templates>
