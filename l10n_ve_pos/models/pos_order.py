@@ -12,9 +12,8 @@ class PosOrder(models.Model):
     foreign_amount_total = fields.Float(string="Foreign Total", readonly=True, default=0.0)
     foreign_currency_rate = fields.Float(readonly=True, required=False)
     
-    def _process_order(self, order, draft, existing_order):
-        res = super()._process_order(order, draft, existing_order)
-        order = self.browse(res)
+    def _process_order(self, order, existing_order):
+        res = super()._process_order(order, existing_order)
         return res
 
     @api.model

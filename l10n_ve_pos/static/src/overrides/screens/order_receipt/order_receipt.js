@@ -6,6 +6,6 @@ import { patch } from "@web/core/utils/patch";
 patch(OrderReceipt, {
     props: {
       ...OrderReceipt.props,
-      formatForeignCurrency: Function,
+      formatForeignCurrency: { type: Function, optional: true },
     },
 });
