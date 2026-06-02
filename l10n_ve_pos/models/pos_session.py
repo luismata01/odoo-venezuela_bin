@@ -369,26 +369,7 @@ class PosSession(models.Model):
         """
         res = super().action_pos_session_close(balancing_account, amount_to_balance, bank_payment_method_diffs)
 
-        # Obtener todas las órdenes de esta sesión de POS
-        orders = self.env['pos.order'].search([('session_id', '=', self.id)])
-
-        for order in orders:
-            # Ajuste de redondeo en el total de la orden
-            order.amount_total = self._apply_rounding(order.amount_total)
-
-            # Recalcular los impuestos (si es necesario)
-            for line in order.lines:
-                line.price_subtotal = self._apply_rounding(line.price_subtotal)
-                # line.price_total = self._apply_rounding(line.price_total)
-            # _logger.info(f"AYUDA {order.state}")
-            # # Verificamos si es un reembolso
-            # states = ['invoiced','in_refund']
-            # if order.state in states:
-            #     self._handle_refund(order)
-
-            # Si es necesario, actualiza los apuntes contables o crea nuevos
-            self._adjust_accounting_entries(order)
-
+        # Rounding adjustments are handled by core Odoo 19; skip legacy loop to avoid concurrent updates.
         return res
 
     def _apply_rounding(self, amount):
