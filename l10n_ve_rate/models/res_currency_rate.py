@@ -12,17 +12,10 @@ class ResCurrencyRate(models.Model):
         """
         Compute the rate and inverse rate for the given currency and date.
 
-        If the foreign currency is USD then the rate will be the inverse company rate and the
-        inverse rate will be the company rate, Else both rates will be the company rate.
-
-        This is done because the foreign rate will be the rate that is gonna be shown to the user
-        and the inverse rate will be the rate that will be used as factor to multiply for the
-        computation of the foreign amounts.
-
-        The logic is that if the foreign currency is VEF then we will be always multiplying by the
-        value the user uses and see as the rate, but if the foreign currency is USD then we will be
-        always multiplying by the inverse rate because the user will see the rate as the inverse
-        rate.
+        The foreign_rate is the rate shown to the user (e.g., 549.37 VEF per USD).
+        The foreign_inverse_rate is the exact reciprocal (e.g., 0.00182 USD per VEF),
+        computed as 1 / foreign_rate to ensure consistency regardless of rounding
+        differences in the stored company_rate / inverse_company_rate fields.
 
         Parameters
         ----------
@@ -50,15 +43,18 @@ class ResCurrencyRate(models.Model):
         rate = rates.filtered(lambda r: r.name == rate_date) or rates[0]
         vef_id = self.env.ref("base.VEF").id
         if vef_id == foreign_currency_id:
-            return {
-                "foreign_rate": rate.company_rate,
-                "foreign_inverse_rate": rate.company_rate,
-            }
+            foreign_rate = rate.company_rate or 0.0
         else:
-            return {
-                "foreign_rate": rate.inverse_company_rate,
-                "foreign_inverse_rate": rate.company_rate,
-            }
+            foreign_rate = rate.inverse_company_rate or 0.0
+
+        # Ensure foreign_inverse_rate is the exact reciprocal of foreign_rate
+        # to avoid inconsistencies when multiplying / dividing in the frontend.
+        foreign_inverse_rate = 1.0 / foreign_rate if foreign_rate else 0.0
+
+        return {
+            "foreign_rate": foreign_rate,
+            "foreign_inverse_rate": foreign_inverse_rate,
+        }
 
     @api.model
     def compute_inverse_rate(self, rate):

@@ -7,23 +7,10 @@ import {
 } from "@web/core/utils/numbers";
 
 patch(PosOrderline.prototype, {
-  setUnitPrice(price) {
-    super.setUnitPrice(price);
-    this._updateForeignPrice();
-  },
-
-  _updateForeignPrice() {
-    const config = this.models["pos.config"].getFirst();
-    if (!config || !config.foreign_currency_id) {
-      return;
-    }
-    const rate = config.foreign_inverse_rate || config.foreign_rate || 0;
-    const foreign_currency = config.foreign_currency_id;
-    const digits = foreign_currency.decimal_places || 2;
-    this.foreign_price = parseFloat(
-      round_di(this.price_unit * rate, digits).toFixed(digits)
-    );
-  },
+  // NO asignar foreign_price en setUnitPrice porque en Odoo 19 el modelo PosOrderline
+  // se instancia desde IndexedDB sin order_id resuelto, y asignar un campo con setter
+  // dispara triggerRecomputeAllPrices() que falla porque las relaciones no están listas.
+  // El cálculo se hace on-demand en get_foreign_unit_price().
 
   get_foreign_currency() {
     const config = this.models["pos.config"].getFirst();
@@ -32,10 +19,9 @@ patch(PosOrderline.prototype, {
 
   get_foreign_price_without_tax() {
     const foreign_currency = this.get_foreign_currency();
-    const digits = foreign_currency ? foreign_currency.decimal_places : 2;
     return round_pr(
       this.get_foreign_unit_price() * this.getQuantity(),
-      digits
+      foreign_currency?.rounding || 0.01,
     );
   },
 
@@ -47,18 +33,27 @@ patch(PosOrderline.prototype, {
     return this.get_all_foreign_prices().priceWithTax;
   },
 
-  get_foreign_total_tax() {
-    return round_pr(
-      this.get_foreign_price_without_tax() * (this.get_tax() / 100),
-      this.get_foreign_currency()?.rounding || 0.01,
-    );
+  get_foreign_tax() {
+    return this.get_all_foreign_prices().tax;
   },
 
   get_foreign_unit_price() {
     const foreign_currency = this.get_foreign_currency();
-    const digits = foreign_currency ? foreign_currency.decimal_places : 2;
+    if (!foreign_currency) {
+      return 0;
+    }
+    const config = this.models["pos.config"].getFirst();
+    const display_rate = config?.foreign_rate || 0;
+    // Use the exact reciprocal of the display rate to ensure consistency.
+    // If foreign_inverse_rate is available and consistent, prefer it; otherwise compute it.
+    let rate = config?.foreign_inverse_rate || 0;
+    if (!rate && display_rate) {
+      rate = 1.0 / display_rate;
+    }
+    const digits = foreign_currency.decimal_places || 2;
+    const foreign_price = this.price_unit * rate;
     return parseFloat(
-      round_di(this.foreign_price || 0, digits).toFixed(digits),
+      round_di(foreign_price, digits).toFixed(digits),
     );
   },
 

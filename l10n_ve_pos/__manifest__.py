@@ -4,7 +4,7 @@
         Módulo de POS (Punto de Venta) en Venezuela
     """,
     "license": "LGPL-3",
-    "author": "binaural-dev",
+    "author": "binaural-dev, TELETRABAJOVE, Ing. Luis Magin Mata C.",
     "support": "contacto@binaural.dev",
     "category": "Point of Sale",
     "website": "https://binauraldev.com/",

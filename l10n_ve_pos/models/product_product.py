@@ -8,4 +8,5 @@ class ProductProduct(models.Model):
     @api.model
     def _load_pos_data_fields(self, config_id):
         res = super()._load_pos_data_fields(config_id)
+        res += ['free_qty', 'qty_available']
         return res

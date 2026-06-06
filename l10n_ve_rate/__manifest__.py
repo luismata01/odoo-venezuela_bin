@@ -4,7 +4,7 @@
         Módulo para configurar el tipo de cambio de Venezuela
     """,
     "license": "LGPL-3",
-    "author": "binaural-dev",
+    "author": "binaural-dev, TELETRABAJOVE, Ing. Luis Magin Mata C.",
     "website": "https://binauraldev.com/",
     "category": "Technical",
     "version": "19.0.1.0.0",

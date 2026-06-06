@@ -4,21 +4,29 @@
      t-inherit-mode="extension"
      owl="1">
 
-    <!-- Debajo del bloque principal del card -->
-    <xpath expr="//div[hasclass('product-content')]" position="after">
-      <t t-if="show_free_qty and pos">
-        <div class="free-qty p-1" style="display:block; width:100%; margin-top:4px;"
-             t-attf-style="{{ free_qty &gt; 0 and 'color: green' or 'color: red' }}">
-          Disponible:
-          <t t-if="stockStatus === 'success' or stockStatus === 'idle'">
-            <t t-esc="free_qty"/>
-          </t>
-          <t t-elif="stockStatus === 'error'">N/A</t>
-          <t t-else="">
-            <i class="fa fa-fw fa-spin fa-circle-o-notch" aria-hidden="true"/>
-          </t>
-        </div>
-      </t>
+    <!-- Cambiar product-content a flex-direction: column para que product-info
+         aparezca debajo del nombre en el flujo normal del documento -->
+    <xpath expr="//div[hasclass('product-content')]" position="attributes">
+        <attribute name="class" add="flex-column" separator=" "/>
+    </xpath>
+
+    <!-- Insertar product-info después del product-name, en el flujo normal.
+         mt-auto empuja el bloque al fondo del product-content.
+         Esto evita solapamiento con el nombre y respeta el padding del contenedor. -->
+    <xpath expr="//div[hasclass('product-name')]" position="after">
+      <div class="product-info mt-auto" style="line-height: 1.2;">
+        <t t-if="show_free_qty">
+          <div class="free-qty w-100 text-truncate" style="font-size: 0.65rem;"
+               t-attf-style="{{ free_qty > 0 ? 'color: green;' : 'color: red;' }}">
+            Disp: <t t-esc="free_qty"/>
+          </div>
+        </t>
+        <t t-if="foreignPriceDisplay">
+          <div class="foreign-price w-100 text-truncate fw-bolder" style="font-size: 0.75rem; color: #333;">
+            <t t-esc="foreignPriceDisplay"/>
+          </div>
+        </t>
+      </div>
     </xpath>
 
   </t>

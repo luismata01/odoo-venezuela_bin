@@ -1,67 +1,57 @@
-// /** @odoo-module */
+/** @odoo-module */
 
-// import { Payment } from "@point_of_sale/app/store/models";
-// import { patch } from "@web/core/utils/patch";
-// import {
-// 	formatFloat,
-// 	roundDecimals as round_di,
-// 	roundPrecision as round_pr,
-// 	floatIsZero,
-// } from "@web/core/utils/numbers";
+import { PosPayment } from "@point_of_sale/app/models/pos_payment";
+import { patch } from "@web/core/utils/patch";
+import { roundPrecision } from "@web/core/utils/numbers";
 
-// // New orders are now associated with the current table, if any.
-// patch(Payment.prototype, {
-// 	setup(_defaultObj, options) {
-// 		super.setup(...arguments);
-// 	},
-// 	init_from_JSON(json) {
-// 		super.init_from_JSON(...arguments);
-// 		this.foreign_amount = json.foreign_amount || this.foreign_amount;
-// 		this.foreign_rate = json.foreign_rate || this.foreign_rate;
-// 	},
-// 	export_as_JSON() {
-// 		let res = super.export_as_JSON(...arguments);
-// 		res["foreign_amount"] = this.foreign_amount;
-// 		res["foreign_rate"] = this.order.get_conversion_rate();
-// 		return res;
-// 	},
-// 	get_foreign_amount() {
-// 		return this.foreign_amount || 0;
-// 	},
-// 	set_amount(amount, only = false) {
-// 		let is_due = amount == this.order.get_due();
-// 		let res = super.set_amount(...arguments);
-// 		if (!only) {
-// 			if (is_due) {
-// 				this.set_foreign_amount(this.order.get_foreign_due(), true);
-// 				return res;
-// 			}
-// 			this.foreign_amount = amount * this.pos.foreign_currency.rate; 
-// 		}
-// 		return res;
-// 	},
-// 	set_foreign_amount(amount, only = false) {
-// 		this.foreign_amount = amount;
-// 		if (!only) {
-// 			if (this.pos.currency.name == "VEF") {
-// 				if (this.payment_method.is_foreign_currency) {
-// 					this.amount=this.foreign_amount / this.pos.foreign_currency.rate
-// 					return;
-// 				}
-// 				this.amount = amount / this.order.get_conversion_rate();
-// 			}
-// 			if (this.pos.currency.name == "USD") {
-// 				if (this.payment_method.is_foreign_currency) {
-// 					this.set_amount(
-// 						this.foreign_amount * this.pos.foreign_currency.inverse_rate,
-// 					);
-// 					return;
-// 				}
-// 				this.set_amount(
-// 					this.foreign_amount * this.order.init_conversion_rate,
-// 					true,
-// 				);
-// 			}
-// 		}
-// 	},
-// });
+patch(PosPayment.prototype, {
+    setup(vals) {
+        super.setup(...arguments);
+        this.foreign_amount = vals.foreign_amount || 0;
+        this.foreign_rate = vals.foreign_rate || 0;
+    },
+
+    get_foreign_amount() {
+        return this.foreign_amount || 0;
+    },
+
+    setAmount(value, only = false) {
+        const amount = parseFloat(value) || 0;
+        const config = this.pos_order_id?.config;
+        const isDue = Math.abs(amount - this.pos_order_id.remainingDue) < 0.01;
+        
+        super.setAmount(amount);
+        
+        if (!only) {
+            if (isDue && config?.foreign_currency_id) {
+                this.set_foreign_amount(this.pos_order_id.get_foreign_total_with_tax(), true);
+            } else if (config?.foreign_currency_id) {
+                const display_rate = config?.foreign_rate || 0;
+                const rate = config?.foreign_inverse_rate || (display_rate ? 1.0 / display_rate : 0);
+                this.foreign_amount = amount * rate;
+            }
+        }
+    },
+
+    set_foreign_amount(amount, only = false) {
+        const foreign_amount = parseFloat(amount) || 0;
+        const config = this.pos_order_id?.config;
+        
+        this.foreign_amount = foreign_amount;
+        
+        if (!only && config?.foreign_currency_id) {
+            const display_rate = config?.foreign_rate || 0;
+            const rate = config?.foreign_inverse_rate || (display_rate ? 1.0 / display_rate : 0);
+            // Convert foreign amount to local amount using the rate
+            const local_amount = rate ? foreign_amount / rate : 0;
+            this.setAmount(local_amount, true);
+        }
+    },
+
+    serializeForORM(opts = {}) {
+        const data = super.serializeForORM(opts);
+        data.foreign_amount = this.foreign_amount;
+        data.foreign_rate = this.foreign_rate || this.pos_order_id?.config?.foreign_rate || 0;
+        return data;
+    },
+});

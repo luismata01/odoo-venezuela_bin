@@ -11,24 +11,25 @@ import { useEnv } from "@odoo/owl";
 // New orders are now associated with the current table, if any.
 patch(PaymentScreen.prototype, {
 
-  setup(){
-    super.setup(...arguments)
-    this.utils = useEnv().utils,
-     this.dialog = useService("dialog");
-  },
+  // NO sobreescribir setup() porque en Odoo 19 patch() no preserva el método original
+  // y super.setup() llama a Component.prototype.setup en vez de PaymentScreen.prototype.setup.
+  // El dialog ya está disponible como this.dialog desde el core.
+  // useEnv().utils se accede directamente en los métodos que lo necesitan.
   shouldDownloadInvoice() {
     return false;
   },
   updateSelectedPaymentline(amount = false) {
+    console.log("[l10n_ve_pos] updateSelectedPaymentline called:", { amount, hasSelectedLine: !!this.selectedPaymentLine, paymentMethod: this.selectedPaymentLine?.payment_method_id?.name, is_foreign_currency: this.selectedPaymentLine?.payment_method_id?.is_foreign_currency });
     if (this.paymentLines.every((line) => line.paid)) {
-      this.currentOrder.add_paymentline(this.payment_methods_from_config[0]);
+      this.currentOrder.addPaymentline(this.payment_methods_from_config[0]);
     }
     if (!this.selectedPaymentLine) {
       return;
     } // do nothing if no selected payment line
 
     // >>  BINAURAL
-    if (!this.selectedPaymentLine.payment_method?.is_foreign_currency) {
+    if (!this.selectedPaymentLine.payment_method_id?.is_foreign_currency) {
+      console.log("[l10n_ve_pos] Not foreign currency, delegating to super");
       return super.updateSelectedPaymentline(amount);
     }
 
@@ -41,34 +42,36 @@ patch(PaymentScreen.prototype, {
         amount = this.numberBuffer.getFloat();
       }
     }
+    console.log("[l10n_ve_pos] Foreign currency amount:", amount);
 
     // disable changing amount on paymentlines with running or done payments on a payment terminal
-    const payment_terminal = this.selectedPaymentLine.payment_method?.payment_terminal;
+    const payment_terminal = this.selectedPaymentLine.payment_method_id?.payment_terminal;
     const hasCashPaymentMethod = this.payment_methods_from_config.some(
       (method) => method.type === "cash"
     );
     if (
       !hasCashPaymentMethod &&
-      amount > this.currentOrder.get_due() + this.selectedPaymentLine.amount
+      amount > this.currentOrder.remainingDue + this.selectedPaymentLine.amount
     ) {
-      this.selectedPaymentLine.set_amount(0);
-      this.numberBuffer.set(this.currentOrder.get_due().toString());
-      amount = this.currentOrder.get_due();
+      this.selectedPaymentLine.setAmount(0);
+      this.numberBuffer.set(this.currentOrder.remainingDue.toString());
+      amount = this.currentOrder.remainingDue;
       this.showMaxValueError();
     }
     if (
       payment_terminal &&
-      !["pending", "retry"].includes(this.selectedPaymentLine.get_payment_status())
+      !["pending", "retry"].includes(this.selectedPaymentLine.getPaymentStatus())
     ) {
       return;
     }
     if (amount === null) {
-      this.deletePaymentLine(this.selectedPaymentLine.cid);
+      this.deletePaymentLine(this.selectedPaymentLine.uuid);
     } else {
-      if (this.selectedPaymentLine.payment_method.is_foreign_currency) {
+      if (this.selectedPaymentLine.payment_method_id?.is_foreign_currency) {
+        console.log("[l10n_ve_pos] Calling set_foreign_amount:", amount);
         this.selectedPaymentLine.set_foreign_amount(amount);
       } else {
-        this.selectedPaymentLine.set_amount(amount);
+        this.selectedPaymentLine.setAmount(amount);
       }
     }
   },
@@ -78,8 +81,8 @@ patch(PaymentScreen.prototype, {
       return res
     }
 
-    let amounts = this.currentOrder.get_paymentlines().map((el) => el.amount)
-    if (!amounts.every((el) => el != 0 && this.currentOrder.get_total_with_tax() !== 0)) {
+    let amounts = this.currentOrder.payment_ids.map((el) => el.amount)
+    if (!amounts.every((el) => el != 0 && this.currentOrder.totalDue !== 0)) {
       this.dialog.add(AlertDialog, {
         title: _t('Empty Paymentline'),
         body: _t(
@@ -98,18 +101,18 @@ patch(PaymentScreen.prototype, {
       id = el.orderline.orderBackendId
     })
 
-    const payments = await this.orm.call('pos.order', 'get_payments_order_refund', [id]);
+    const payments = await this.pos.orm.call('pos.order', 'get_payments_order_refund', [id]);
 
     let payment_list = payments.map(el => {
       return {
         id: el.id,
-        label: el.payment_method_id[1] + " " + el.display_name + " / " + this.utils.formatForeignCurrency(el.foreign_amount),
+        label: el.payment_method_id[1] + " " + el.display_name + " / " + this.env.utils.formatForeignCurrency(el.foreign_amount),
         isSelected: false,
         item: el,
       }
 
     })
-    await this.popup.add(
+    await this.dialog.add(
       SelectionPopup,
       {
         title: _t("Payments"),

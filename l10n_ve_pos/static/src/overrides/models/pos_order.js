@@ -170,7 +170,6 @@ get_foreign_currency(){
   get_foreign_total_without_tax() {
     const lines = this.get_orderlines();
     const foreign_currency = this.get_foreign_currency();
-    const digits = foreign_currency ? foreign_currency.decimal_places : 2;
     return round_pr(
       lines.reduce(function (sum, orderLine) {
         if (typeof orderLine.get_foreign_price_without_tax === "function") {
@@ -472,6 +471,13 @@ get_foreign_currency(){
 //     }
 //     return round_pr(due, this.pos.foreign_currency.rounding);
 //   },
+
+  serializeForORM(opts = {}) {
+    const data = super.serializeForORM(opts);
+    data.foreign_amount_total = this.get_foreign_total_with_tax();
+    data.foreign_currency_rate = this.get_display_rate();
+    return data;
+  },
 
   get_qty_products() {
     let qty = 0;

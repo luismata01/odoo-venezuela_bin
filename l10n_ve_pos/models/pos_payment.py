@@ -22,6 +22,12 @@ class PosPayment(models.Model):
         for record in self:
             record.foreign_currency_id = record.env.company.foreign_currency_id
 
+    @api.model
+    def _load_pos_data_fields(self, config):
+        res = super()._load_pos_data_fields(config)
+        res += ['foreign_rate', 'foreign_amount', 'foreign_currency_id']
+        return res
+
     def _export_for_ui(self, payment):
         res = super()._export_for_ui(payment)
         res["foreign_rate"] = payment.foreign_rate

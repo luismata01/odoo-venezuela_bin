@@ -2,58 +2,40 @@
 
 import { ProductCard } from "@point_of_sale/app/components/product_card/product_card";
 import { patch } from "@web/core/utils/patch";
-import { useState, useEffect } from "@odoo/owl";
-import { useTrackedAsync } from "@point_of_sale/app/hooks/hooks";
-import { debounce } from "@web/core/utils/timing";
+import { usePos } from "@point_of_sale/app/hooks/pos_hook";
 
 patch(ProductCard.prototype, {
   setup() {
-    this.state = useState({
-      available_quantity: 0,
-    });
-
-    this.fetchStock = useTrackedAsync(
-      (product) => this.pos.getProductInfo(product, 1),
-      { keepLast: true }
-    );
-
-    const debouncedFetchStocks = debounce(async (productId) => {
-      const product =
-        this.pos?.db?.product_by_id?.[productId] ||
-        this.props.product ||
-        null;
-      if (!product) {
-        this.state.available_quantity = 0;
-        return;
-      }
-
-      await this.fetchStock.call(product);
-      if (this.fetchStock.status === "success" && this.fetchStock.result) {
-        const info = this.fetchStock.result.productInfo;
-        this.state.available_quantity = info?.warehouses?.[0]?.available_quantity ?? 0;
-      } else if (this.fetchStock.status === "error") {
-        this.state.available_quantity = 0;
-      }
-    }, 250);
-
-    useEffect(
-      () => {
-        const productId = this.props.productId ?? this.props.product?.id ?? null;
-        if (productId) debouncedFetchStocks(productId);
-      },
-      () => [this.props.productId, this.props.product?.id]
-    );
+    super.setup();
+    this.pos = usePos();
   },
 
   get show_free_qty() {
-    return this.pos?.config?.pos_show_free_qty;
+    const val = this.pos?.config?.pos_show_free_qty;
+    if (val === undefined) {
+      console.warn("[l10n_ve_pos] pos_show_free_qty is undefined in pos.config");
+    }
+    return val ?? false;
   },
 
   get free_qty() {
-    return Number(this.state.available_quantity) || 0;
+    const val = this.props.product?.free_qty;
+    if (val === undefined) {
+      console.warn("[l10n_ve_pos] free_qty is undefined for product", this.props.product?.id);
+    }
+    return val ?? 0;
   },
 
-  get stockStatus() {
-    return this.fetchStock?.status || "idle";
+  get foreignPriceDisplay() {
+    const product = this.props.product;
+    const config = this.pos?.config;
+    if (!config?.foreign_currency_id) {
+      return "";
+    }
+    const local_price = product?.list_price || product?.lst_price || 0;
+    const display_rate = config?.foreign_rate || 0;
+    const rate = config?.foreign_inverse_rate || (display_rate ? 1.0 / display_rate : 0);
+    const foreign_price = local_price * rate;
+    return this.env.utils.formatForeignCurrency(foreign_price);
   },
 });
