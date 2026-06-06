@@ -205,6 +205,7 @@ get_foreign_currency(){
 //   },
   get_foreign_total_tax() {
     const orderlines = this.get_orderlines();
+    const foreign_currency = this.get_foreign_currency();
     if (this.company.tax_calculation_rounding_method === "round_globally") {
       // As always, we need:
       // 1. For each tax, sum their amount across all order lines
@@ -226,7 +227,6 @@ get_foreign_currency(){
 
       var sum = 0;
       var taxIds = Object.keys(groupTaxes);
-      const foreign_currency = this.get_foreign_currency();
       
       for (var j = 0; j < taxIds.length; j++) {
         var taxAmount = groupTaxes[taxIds[j]];
