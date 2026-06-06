@@ -5,8 +5,8 @@ import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreenPaymentLines.prototype, {
   formatIgtfAmount(paymentline) {
-    let igtf_amount = this.env.utils.formatCurrency(paymentline.igtf_amount, true)
-    let foreign_igtf_amount = this.env.utils.formatForeignCurrency(paymentline.foreign_igtf_amount, true)
-    return igtf_amount + " / " + foreign_igtf_amount
-  }
-})
+    let igtf_amount = this.env.utils.formatCurrency(paymentline.igtf_amount, true);
+    let foreign_igtf_amount = this.env.utils.formatForeignCurrency(paymentline.foreign_igtf_amount, true);
+    return igtf_amount + " / " + foreign_igtf_amount;
+  },
+});

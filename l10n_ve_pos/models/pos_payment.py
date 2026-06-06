@@ -24,9 +24,7 @@ class PosPayment(models.Model):
 
     @api.model
     def _load_pos_data_fields(self, config):
-        res = super()._load_pos_data_fields(config)
-        res += ['foreign_rate', 'foreign_amount', 'foreign_currency_id']
-        return res
+        return []  # Load all fields (our custom fields are auto-included)
 
     def _export_for_ui(self, payment):
         res = super()._export_for_ui(payment)

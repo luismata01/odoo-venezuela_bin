@@ -17,15 +17,16 @@ patch(PosPayment.prototype, {
 
     setAmount(value, only = false) {
         const amount = parseFloat(value) || 0;
-        const config = this.pos_order_id?.config;
-        const isDue = Math.abs(amount - this.pos_order_id.remainingDue) < 0.01;
+        const order = this.pos_order_id;
+        const config = order?.config || this.config;
         
         super.setAmount(amount);
         
-        if (!only) {
-            if (isDue && config?.foreign_currency_id) {
-                this.set_foreign_amount(this.pos_order_id.get_foreign_total_with_tax(), true);
-            } else if (config?.foreign_currency_id) {
+        if (!only && this.payment_method_id?.is_foreign_currency) {
+            const isDue = order ? Math.abs(amount - order.remainingDue) < 0.01 : false;
+            if (isDue && order) {
+                this.set_foreign_amount(order.get_foreign_total_with_tax(), true);
+            } else {
                 const display_rate = config?.foreign_rate || 0;
                 const rate = config?.foreign_inverse_rate || (display_rate ? 1.0 / display_rate : 0);
                 this.foreign_amount = amount * rate;
@@ -42,7 +43,6 @@ patch(PosPayment.prototype, {
         if (!only && config?.foreign_currency_id) {
             const display_rate = config?.foreign_rate || 0;
             const rate = config?.foreign_inverse_rate || (display_rate ? 1.0 / display_rate : 0);
-            // Convert foreign amount to local amount using the rate
             const local_amount = rate ? foreign_amount / rate : 0;
             this.setAmount(local_amount, true);
         }

@@ -3,19 +3,62 @@ import { patch } from "@web/core/utils/patch";
 import { Orderline } from "@point_of_sale/app/components/orderline/orderline";
 
 patch(Orderline.prototype, {
-  //DEPRECATED
-  // init_from_JSON(json) {
-  //   super.init_from_JSON(...arguments);
-  //   this.tax_ids =
-  //     json.tax_ids && json.tax_ids.length !== 0
-  //       ? json.tax_ids[0][2]
-  //       : undefined;
-  //   this.foreign_price = json.foreign_price || 0;
-  //   this.foreign_currency_rate = json.foreign_currency_rate || false;
-  //   this.foreign_currency_rate_display = false;
-  // },
   setup() {
     super.setup();
+  },
+
+  get lineForeignPrice() {
+    try {
+      const product = this.line?.product_id;
+      const config = this.pos?.config;
+      if (!config?.foreign_currency_id) {
+        return "";
+      }
+      const local_price = this.line?.displayPriceNoDiscount || this.line?.price || 0;
+      const display_rate = config?.foreign_rate || 0;
+      const rate = config?.foreign_inverse_rate || (display_rate ? 1.0 / display_rate : 0);
+      const foreign_price = local_price * rate;
+      if (typeof this.env.utils?.formatForeignCurrency !== "function") {
+        return "";
+      }
+      if (this.line?.get_discount_str && this.line.get_discount_str() === "100") {
+        return "free";
+      }
+      return this.env.utils.formatForeignCurrency(foreign_price);
+    } catch (e) {
+      return "";
+    }
+  },
+
+  get lineAliquotType() {
+    try {
+      const taxes = this.line?.tax_ids || this.line?.product_id?.taxes_id;
+      if (!taxes || taxes.length < 1) {
+        return "(E)";
+      }
+      const tax = this.pos?.taxes_by_id?.[taxes[0]];
+      if (!tax || tax.amount === 0) {
+        return "(E)";
+      }
+      return "(G)";
+    } catch (e) {
+      return "";
+    }
+  },
+
+  get lineForeignRateDisplay() {
+    try {
+      const config = this.pos?.config;
+      if (!config?.foreign_rate) {
+        return "";
+      }
+      if (typeof this.env.utils?.formatForeignCurrency !== "function") {
+        return "";
+      }
+      return this.env.utils.formatForeignCurrency(config.foreign_rate);
+    } catch (e) {
+      return "";
+    }
   },
   get_rate() {
     if (this.order._isRefundOrder() && this.get_refund_orderline()) {

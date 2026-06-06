@@ -1,8 +1,7 @@
 <templates id="template" xml:space="preserve">
   <t t-name="l10n_ve_pos.ProductCardExt"
      t-inherit="point_of_sale.ProductCard"
-     t-inherit-mode="extension"
-     owl="1">
+     t-inherit-mode="extension">
 
     <!-- Cambiar product-content a flex-direction: column para que product-info
          aparezca debajo del nombre en el flujo normal del documento -->
@@ -22,7 +21,7 @@
           </div>
         </t>
         <t t-if="foreignPriceDisplay">
-          <div class="foreign-price w-100 text-truncate fw-bolder" style="font-size: 0.75rem; color: #333;">
+          <div class="foreign-price w-100 text-truncate fw-bolder" style="font-size: 0.75rem;">
             <t t-esc="foreignPriceDisplay"/>
           </div>
         </t>

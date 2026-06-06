@@ -48,6 +48,9 @@ class PosConfig(models.Model):
             )
             config.update(rate_values)
 
+    def _load_pos_data_fields(self, config):
+        return []  # Load all fields (our custom fields are auto-included)
+
     def _action_to_open_ui(self):
         res = super()._action_to_open_ui()
         if (

@@ -4,8 +4,16 @@
         <xpath expr="//div[hasclass('receipt-total')]" position="after">
             <div class="pos-receipt-amount receipt-foreign-total fw-bolder">
                 <span class="label-total">Total (Foreign)</span>
-                <span t-out="env.utils.formatForeignCurrency(props.order.get_foreign_total_with_tax())" class="pos-receipt-right-align font-monospace"/>
+                <span t-if="props.order" t-out="env.utils.formatForeignCurrency(props.order.get_foreign_total_with_tax() || 0)" class="pos-receipt-right-align font-monospace"/>
             </div>
+        </xpath>
+        <xpath expr="//div[hasclass('paymentlines')]/span[hasclass('pos-receipt-right-align')]" position="replace">
+            <t t-if="line.payment_method_id.is_foreign_currency">
+                <span t-out="env.utils.formatForeignCurrency(line.get_foreign_amount())" class="pos-receipt-right-align font-monospace"/>
+            </t>
+            <t t-else="">
+                <span t-out="formatCurrency(line.getAmount())" class="pos-receipt-right-align font-monospace"/>
+            </t>
         </xpath>
     </t>
 </templates>

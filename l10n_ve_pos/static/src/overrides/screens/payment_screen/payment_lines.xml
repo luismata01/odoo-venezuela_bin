@@ -6,7 +6,21 @@
         <xpath expr="//div[hasclass('payment-amount')]" position="replace">
             <div class="payment-amount px-3">
                 <t t-if="line.payment_method_id and line.payment_method_id.is_foreign_currency">
-                    <t t-out="env.utils.formatForeignCurrency(line.get_foreign_amount ? line.get_foreign_amount() : 0)"/>
+                    <t t-out="env.utils.formatForeignCurrency(
+                        line.get_foreign_amount ? line.get_foreign_amount() : 0
+                    )"/>
+                </t>
+                <t t-else="">
+                    <t t-out="env.utils.formatCurrency(line.getAmount())"/>
+                </t>
+            </div>
+        </xpath>
+        <xpath expr="//div[hasclass('bg-view')]//div[hasclass('payment-amount')]" position="replace">
+            <div class="payment-amount px-3">
+                <t t-if="line.payment_method_id and line.payment_method_id.is_foreign_currency">
+                    <t t-out="env.utils.formatForeignCurrency(
+                        line.get_foreign_amount ? line.get_foreign_amount() : 0
+                    )"/>
                 </t>
                 <t t-else="">
                     <t t-out="env.utils.formatCurrency(line.getAmount())"/>

@@ -4,9 +4,7 @@ import { PaymentScreen } from "@point_of_sale/app/screens/payment_screen/payment
 import { patch } from "@web/core/utils/patch";
 import { _t } from "@web/core/l10n/translation";
 import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
-import { useService } from "@web/core/utils/hooks";
 import { SelectionPopup } from "@point_of_sale/app/components/popups/selection_popup/selection_popup";
-import { useEnv } from "@odoo/owl";
 
 // New orders are now associated with the current table, if any.
 patch(PaymentScreen.prototype, {
@@ -19,17 +17,14 @@ patch(PaymentScreen.prototype, {
     return false;
   },
   updateSelectedPaymentline(amount = false) {
-    console.log("[l10n_ve_pos] updateSelectedPaymentline called:", { amount, hasSelectedLine: !!this.selectedPaymentLine, paymentMethod: this.selectedPaymentLine?.payment_method_id?.name, is_foreign_currency: this.selectedPaymentLine?.payment_method_id?.is_foreign_currency });
     if (this.paymentLines.every((line) => line.paid)) {
       this.currentOrder.addPaymentline(this.payment_methods_from_config[0]);
     }
     if (!this.selectedPaymentLine) {
       return;
-    } // do nothing if no selected payment line
+    }
 
-    // >>  BINAURAL
     if (!this.selectedPaymentLine.payment_method_id?.is_foreign_currency) {
-      console.log("[l10n_ve_pos] Not foreign currency, delegating to super");
       return super.updateSelectedPaymentline(amount);
     }
 
@@ -42,20 +37,21 @@ patch(PaymentScreen.prototype, {
         amount = this.numberBuffer.getFloat();
       }
     }
-    console.log("[l10n_ve_pos] Foreign currency amount:", amount);
 
     // disable changing amount on paymentlines with running or done payments on a payment terminal
     const payment_terminal = this.selectedPaymentLine.payment_method_id?.payment_terminal;
     const hasCashPaymentMethod = this.payment_methods_from_config.some(
       (method) => method.type === "cash"
     );
+    const display_rate = this.pos.config?.foreign_rate || 1;
+    const amountLocal = amount * display_rate;
     if (
       !hasCashPaymentMethod &&
-      amount > this.currentOrder.remainingDue + this.selectedPaymentLine.amount
+      amountLocal > this.currentOrder.remainingDue + this.selectedPaymentLine.amount
     ) {
-      this.selectedPaymentLine.setAmount(0);
+      this.selectedPaymentLine.set_foreign_amount(0, true);
       this.numberBuffer.set(this.currentOrder.remainingDue.toString());
-      amount = this.currentOrder.remainingDue;
+      amount = this.currentOrder.remainingDue / display_rate;
       this.showMaxValueError();
     }
     if (
@@ -67,12 +63,7 @@ patch(PaymentScreen.prototype, {
     if (amount === null) {
       this.deletePaymentLine(this.selectedPaymentLine.uuid);
     } else {
-      if (this.selectedPaymentLine.payment_method_id?.is_foreign_currency) {
-        console.log("[l10n_ve_pos] Calling set_foreign_amount:", amount);
-        this.selectedPaymentLine.set_foreign_amount(amount);
-      } else {
-        this.selectedPaymentLine.setAmount(amount);
-      }
+      this.selectedPaymentLine.set_foreign_amount(amount);
     }
   },
   async _isOrderValid(isForceValidate) {

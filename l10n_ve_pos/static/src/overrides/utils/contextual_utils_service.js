@@ -9,10 +9,13 @@ patch(contextualUtilsService, {
   //@override
   start(env, { pos, localization }) {
     super.start(...arguments)
-    const foreign_currency = pos.config.foreign_currency_id;
+    const foreign_currency = pos.config?.foreign_currency_id;
     const formatForeignCurrency = (value, hasSymbol = true) => {
       if (!value) {
         value = 0
+      }
+      if (!foreign_currency) {
+        return env.utils.formatCurrency(value);
       }
       return formatMonetary(value, {
         currencyId: foreign_currency.id,
@@ -21,7 +24,7 @@ patch(contextualUtilsService, {
     };
 
     const formatStrForeignCurrency = (valueStr, hasSymbol = true) => {
-      return formatCurrency(parseFloat(valueStr), hasSymbol);
+      return formatForeignCurrency(parseFloat(valueStr), hasSymbol);
     };
 
     env.utils = {

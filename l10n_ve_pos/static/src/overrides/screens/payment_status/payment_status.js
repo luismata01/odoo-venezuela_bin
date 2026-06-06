@@ -4,15 +4,9 @@ import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreenStatus.prototype, {
   get foreignTotalDueText() {
-    // Simplified for Odoo 19: payment foreign amount methods are not available yet
+    if (!this.props.order) return '0.00';
     return this.env.utils.formatForeignCurrency(
-      this.props.order.get_foreign_total_with_tax()
+      this.props.order.get_foreign_total_with_tax() || 0
     );
-  },
-  get foreignRemainingText() {
-    return this.env.utils.formatForeignCurrency(0);
-  },
-  get foreignChangeText() {
-    return this.env.utils.formatForeignCurrency(0);
   },
 });
