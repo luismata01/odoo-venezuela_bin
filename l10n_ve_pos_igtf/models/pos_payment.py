@@ -163,4 +163,9 @@ class PosPayment(models.Model):
                 [credit_line_vals, debit_line_vals]
             )
             payment_move._post()
+            payment_move.write({
+                "foreign_rate": payment.foreign_rate,
+                "foreign_inverse_rate": payment.foreign_rate,
+                "manually_set_rate": True,
+            })
         return result

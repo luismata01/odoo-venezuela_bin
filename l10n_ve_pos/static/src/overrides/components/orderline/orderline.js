@@ -1,6 +1,7 @@
 
 import { patch } from "@web/core/utils/patch";
 import { Orderline } from "@point_of_sale/app/components/orderline/orderline";
+import { roundDecimals as round_di } from "@web/core/utils/numbers";
 
 patch(Orderline.prototype, {
   setup() {
@@ -94,32 +95,17 @@ patch(Orderline.prototype, {
   // },
   set_unit_price(price) {
     this.order.assert_editable();
-    var parsed_price = !isNaN(price)
-      ? price
-      : isNaN(parseFloat(price))
-        ? 0
-        : oParseFloat("" + price);
-    this.price = round_di(
-      parsed_price || 0,
-      this.pos.dp["Foreign Product Price"],
-    );
-    this.foreign_price = round_di(
-      parsed_price * this.get_rate() || 0,
-      this.pos.dp["Foreign Product Price"],
-    );
+    var parsed_price = typeof price === "number" ? price : parseFloat(String(price).replace(",", ".")) || 0;
+    var rounding = this.pos.currency?.rounding || 0.01;
+    this.price = round_di(parsed_price, rounding);
+    this.foreign_price = round_di(parsed_price * this.get_rate(), rounding);
   },
 
   set_foreign_unit_price(price) {
     this.order.assert_editable();
-    var parsed_price = !isNaN(price)
-      ? price
-      : isNaN(parseFloat(price))
-        ? 0
-        : oParseFloat("" + price);
-    this.foreign_price = round_di(
-      parsed_price || 0,
-      this.pos.dp["Foreign Product Price"],
-    );
+    var parsed_price = typeof price === "number" ? price : parseFloat(String(price).replace(",", ".")) || 0;
+    var rounding = this.pos.currency?.rounding || 0.01;
+    this.foreign_price = round_di(parsed_price, rounding);
   },
 
   
@@ -175,11 +161,10 @@ patch(Orderline.prototype, {
   },
 
   get_lst_foreign_price() {
-    return this.product.get_foreign_price(
-      this.pos.default_pricelist,
-      1,
-      this.price_extra,
-    );
+    const product = this.getProduct();
+    if (!product) return 0;
+    const lstPrice = product.lst_price || 0;
+    return lstPrice * this.get_rate();
   },
 
   get_taxed_lst_unit_foreign_price() {
@@ -190,11 +175,14 @@ patch(Orderline.prototype, {
       taxesIds,
       this.order.fiscal_position,
     );
+    const foreignCurrencyId = this.pos.config?.foreign_currency_id?.[0];
+    const foreignCurrency = foreignCurrencyId ? this.pos.currencies_by_id?.[foreignCurrencyId] : null;
+    const rounding = foreignCurrency?.rounding || this.pos.currency?.rounding || 0.01;
     const unitPrices = this.compute_all(
       productTaxes,
       lstPrice,
       1,
-      this.pos.foreign_currency.rounding,
+      rounding,
     );
     if (this.pos.config.iface_tax_included === "total") {
       return unitPrices.total_included;

@@ -14,15 +14,15 @@ patch(PaymentScreenStatus.prototype, {
   },
   get igtfAmount() {
     if (!this.props.order) return '0.00';
-    return this.env.utils.formatCurrency(this.props.order.get_igtf_amount(), 'Product Price');
+    return this.env.utils.formatCurrency(this.props.order.get_igtf_amount());
   },
   get biAmount() {
     if (!this.props.order) return '0.00';
-    return this.env.utils.formatCurrency(this.props.order.get_bi_igtf(), 'Product Price');
+    return this.env.utils.formatCurrency(this.props.order.get_bi_igtf());
   },
   get igtfForeignAmount() {
     if (!this.props.order) return '0.00';
-    return this.env.utils.formatForeignCurrency(this.props.order.get_foreign_igtf_amount(), 'Product Price');
+    return this.env.utils.formatForeignCurrency(this.props.order.get_foreign_igtf_amount());
   },
   get isIgtf() {
     if (!this.props.order) return false;
@@ -46,14 +46,14 @@ patch(PaymentScreenStatus.prototype, {
     });
 
     if (!hasIgtfMethod) {
-      return this.env.utils.formatCurrency(0, 'Product Price');
+      return this.env.utils.formatCurrency(0);
     }
 
     const totalWithTax = this.props.order.priceIncl;
     const roundingApplied = this.props.order.appliedRounding || 0;
     const igtfAmount = (totalWithTax * (this.pos.config.igtf_percentage / 100)) + roundingApplied;
 
-    return this.env.utils.formatCurrency(igtfAmount, 'Product Price');
+    return this.env.utils.formatCurrency(igtfAmount);
   },
   get suggestedIgtf() {
     if (!this.props.order || !this.pos) return '0.00';

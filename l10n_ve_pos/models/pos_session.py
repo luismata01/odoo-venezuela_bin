@@ -22,7 +22,7 @@ class PosSession(models.Model):
         return res
 
     def _loader_params_pos_payment(self):
-        res = super()._loader_params_pos_payment(self)
+        res = super()._loader_params_pos_payment()
         res["search_params"]["fields"].append("foreign_rate")
         return res
 
@@ -141,7 +141,7 @@ class PosSession(models.Model):
         return res
 
     def is_user_authorized(self):
-        is_group = self.env.user.has_group("l10_ve_pos.group_authorized_discount_pos")
+        is_group = self.env.user.has_group("l10n_ve_pos.group_authorized_discount_pos")
         return is_group
 
     # def _validate_cross_move(self):
