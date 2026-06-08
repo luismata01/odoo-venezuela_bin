@@ -29,5 +29,8 @@
             <field name="target">new</field>
         </record>
 
+        <menuitem id="menu_pos_sales_book" action="action_pos_sales_book"
+            parent="account.menu_finance_reports" sequence="6" name="POS Sales Book"/>
+
     </data>
 </odoo>

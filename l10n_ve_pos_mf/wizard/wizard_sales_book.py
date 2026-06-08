@@ -8,7 +8,7 @@ import xlsxwriter
 
 class SalesBookPOS(models.TransientModel):
     _name = "wizard.sales.book"
-    _description = "Wizard to download xlsx of sakes Book POS"
+    _description = "Wizard to download xlsx of Sales Book POS"
     _check_company_auto = True
 
     company_id = fields.Many2one("res.company", default=lambda self: self.env.user.company_id.id)
@@ -81,24 +81,25 @@ class SalesBookPOS(models.TransientModel):
                 if range_start == 0:
                     range_start = move.mf_invoice_number
 
-                total_with_tax += move.amount_total if vef_base else move.foreign_amount_total
+                if move.move_type == "out_invoice":
+                    total_with_tax += move.amount_total if vef_base else move.foreign_amount_total
 
-                amount_base = move.amount_by_group_base
-                if not vef_base:
-                    amount_base = move.foreign_amount_by_group_base
+                    amount_base = move.amount_by_group_base
+                    if not vef_base:
+                        amount_base = move.foreign_amount_by_group_base
 
-                for tax in amount_base:
-                    if tax[0] == "Total G 16%":
-                        tax_base_16 += tax[1]
-                        tax_amount_16 += tax[2]
-                    if tax[0] == "Total G 8%":
-                        tax_base_8 += tax[1]
-                        tax_amount_8 += tax[2]
-                    if tax[0] == "Total G 31%":
-                        tax_base_31 += tax[1]
-                        tax_amount_31 += tax[2]
-                    if tax[0] == "Total G 0%":
-                        total_exent += tax[1]
+                    for tax in amount_base:
+                        if tax[0] == "Total G 16%":
+                            tax_base_16 += tax[1]
+                            tax_amount_16 += tax[2]
+                        if tax[0] == "Total G 8%":
+                            tax_base_8 += tax[1]
+                            tax_amount_8 += tax[2]
+                        if tax[0] == "Total G 31%":
+                            tax_base_31 += tax[1]
+                            tax_amount_31 += tax[2]
+                        if tax[0] == "Total G 0%":
+                            total_exent += tax[1]
 
                 if move.move_type == "out_invoice":
                     if (
@@ -174,15 +175,33 @@ class SalesBookPOS(models.TransientModel):
 
                 if move.move_type == "out_refund":
                     total_current = total_current * -1
-                    total_with_tax = total_with_tax * -1
-                    total_exent = total_exent * -1
-                    tax_base_16 = tax_base_16 * -1
-                    tax_amount_16 = tax_amount_16 * -1
-                    tax_base_8 = tax_base_8 * -1
-                    tax_amount_8 = tax_amount_8 * -1
-                    tax_base_31 = tax_base_31 * -1
-                    tax_amount_31 = tax_amount_31 * -1
-                    iva_retention = iva_retention * -1
+
+                move_tax_base_16 = 0
+                move_tax_amount_16 = 0
+                move_tax_base_8 = 0
+                move_tax_amount_8 = 0
+                move_tax_base_31 = 0
+                move_tax_amount_31 = 0
+                move_total_exent = 0
+
+                move_amount_base = move.amount_by_group_base
+                if not vef_base:
+                    move_amount_base = move.foreign_amount_by_group_base
+
+                for tax in move_amount_base:
+                    if tax[0] == "Total G 16%":
+                        move_tax_base_16 += tax[1]
+                        move_tax_amount_16 += tax[2]
+                    if tax[0] == "Total G 8%":
+                        move_tax_base_8 += tax[1]
+                        move_tax_amount_8 += tax[2]
+                    if tax[0] == "Total G 31%":
+                        move_tax_base_31 += tax[1]
+                        move_tax_amount_31 += tax[2]
+                    if tax[0] == "Total G 0%":
+                        move_total_exent += tax[1]
+
+                multiplier = -1 if move.move_type == "out_refund" else 1
 
                 lines_to_sales_book = {
                     "date": self._format_date(move.invoice_date_display),
@@ -200,17 +219,17 @@ class SalesBookPOS(models.TransientModel):
                     else "",
                     "retention_receipt": retention_receipt or "",
                     "total_with_tax": total_current,
-                    "total_without_tax": total_exent,
-                    "tax_base_16": tax_base_16,
+                    "total_without_tax": move_total_exent * multiplier,
+                    "tax_base_16": move_tax_base_16 * multiplier,
                     "aliquot_16": aliquot_16,
-                    "tax_amount_16": tax_amount_16,
-                    "tax_base_8": tax_base_8,
+                    "tax_amount_16": move_tax_amount_16 * multiplier,
+                    "tax_base_8": move_tax_base_8 * multiplier,
                     "aliquot_8": aliquot_8,
-                    "tax_amount_8": tax_amount_8,
-                    "tax_base_31": tax_base_31,
-                    "tax_amount_31": tax_amount_31,
+                    "tax_amount_8": move_tax_amount_8 * multiplier,
+                    "tax_base_31": move_tax_base_31 * multiplier,
+                    "tax_amount_31": move_tax_amount_31 * multiplier,
                     "aliquot_31": aliquot_31,
-                    "iva_retention": iva_retention,
+                    "iva_retention": iva_retention * multiplier,
                 }
                 range_start = 0
                 total_with_tax = 0
@@ -339,6 +358,12 @@ class SalesBookPOS(models.TransientModel):
             record.date_to = date_to
 
             lines = record.get_lines_account_move()
+            if not lines:
+                workbook = xlsxwriter.Workbook(file, {"in_memory": True, "nan_inf_to_errors": True})
+                worksheet = workbook.add_worksheet()
+                worksheet.write(0, 0, _("No records found for the selected date range."))
+                workbook.close()
+                return file.getvalue()
 
             workbook = xlsxwriter.Workbook(file, {"in_memory": True, "nan_inf_to_errors": True})
             worksheet = workbook.add_worksheet()
@@ -452,7 +477,7 @@ class SalesBookPOS(models.TransientModel):
 
     def download_sales_book(self):
         self.ensure_one()
-        url = f"/web/binary/download_sales_book?&date_from={self.date_from}&date_to={self.date_to}"
+        url = f"/web/binary/download_sales_book?id={self.id}&date_from={self.date_from}&date_to={self.date_to}"
         return {"type": "ir.actions.act_url", "url": url, "target": "self"}
 
     def _format_date(self, date):

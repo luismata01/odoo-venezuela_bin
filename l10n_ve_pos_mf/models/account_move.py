@@ -10,12 +10,12 @@ class AccountMoveInh(models.Model):
 
     cashbox_id = fields.Many2one("pos.config", string="Cashbox invoiced", copy=False)
     sales_book_type = fields.Selection(
-        [("01-REG", "01-REG"), ("02-REG", "02-REG"), ("03-REG", "03-ANU")],
+        [("01-REG", "01-REG"), ("02-REG", "02-REG"), ("03-ANU", "03-ANU")],
         compute="_compute_sales_book_type",
         default="01-REG",
     )
 
-    @api.depends("sales_book_type")
+    @api.depends("move_type", "state")
     def _compute_sales_book_type(self):
         for record in self:
             if record.move_type in ["out_refund", "out_debit"] and record.state in "posted":

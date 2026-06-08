@@ -53,7 +53,7 @@ class WizardStockBookReport(models.TransientModel):
 
     def download_stock_book(self):
         self.ensure_one()
-        url = "/web/download_stock_book?company_id=%s" % self.company_id.id
+        url = f"/web/download_stock_book?id={self.id}&company_id={self.company_id.id}"
         return {"type": "ir.actions.act_url", "url": url, "target": "self"}
     
     def parse_stock_book_data(self):
@@ -117,7 +117,6 @@ class WizardStockBookReport(models.TransientModel):
         old_stock = self.env['stock.valuation.layer'].search([
             ("product_id","=",product_id),
             ("create_date", "<", self.date_from),
-            ("create_date", ">=", self.date_from - relativedelta(months=1)),
             ("stock_move_id.state", "=", "done")
         ])
 
@@ -183,7 +182,7 @@ class WizardStockBookReport(models.TransientModel):
             },
             {
                 "name": "ITEM DE INVENTARIO",
-                "field": "index",
+                "field": "_id",
             },
             {
                 "name": "DESCRIPCIÓN",
@@ -237,14 +236,12 @@ class WizardStockBookReport(models.TransientModel):
                 "field": "incoming_total",
                 "format": "number",
                 "size": 20,
-                "format":"number",
             },
             {
                 "name": "SALIDAS",
                 "field": "outgoing_total",
                 "format": "number",
                 "size": 15,
-                "format":"number",
             },
             {
                 "name": "RETIROS",
@@ -278,15 +275,11 @@ class WizardStockBookReport(models.TransientModel):
         worksheet = workbook.add_worksheet()
 
         # cell formats
-        cell_bold = workbook.add_format(
-            {"bold": True, "text_wrap": True, "bottom": True}
-        )
         merge_format = workbook.add_format(
             {"bold": 1, "font_name":"Arial", "font_size":7 ,"border": 1, "align": "center", "valign": "vcenter",}
         )
         cell_formats = {
             "number": workbook.add_format({"num_format": "#,##0.00"}),
-            "percent": workbook.add_format({"num_format": "0.00%"}),
         }
 
         worksheet.merge_range(
@@ -345,7 +338,7 @@ class WizardStockBookReport(models.TransientModel):
                 if field["field"] == "index":
                     worksheet.write(INIT_LINES + index_line, index, index_line + 1)
                 else:
-                    cell_format = cell_formats.get(field.get("format"), workbook.add_format())
+                    cell_format = cell_formats.get(field.get("format"))
                     worksheet.write(
                         INIT_LINES + index_line, index, line.get(field["field"]), cell_format
                     )
