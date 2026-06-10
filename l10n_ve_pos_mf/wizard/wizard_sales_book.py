@@ -11,6 +11,17 @@ class SalesBookPOS(models.TransientModel):
     _description = "Wizard to download xlsx of Sales Book POS"
     _check_company_auto = True
 
+    ABSTRACT_FIELD_MAP = {
+        "total_without_tax": (1, 4),
+        "tax_base_16": (3, 4),
+        "tax_amount_16": (3, 5),
+        "tax_base_8": (4, 4),
+        "tax_amount_8": (4, 5),
+        "tax_base_31": (5, 4),
+        "tax_amount_31": (5, 5),
+        "iva_retention": (6, 5),
+    }
+
     company_id = fields.Many2one("res.company", default=lambda self: self.env.user.company_id.id)
     date_from = fields.Date(required=True, default=datetime.today().replace(day=1))
     date_to = fields.Date(
@@ -79,7 +90,7 @@ class SalesBookPOS(models.TransientModel):
                     is_last_move = True
 
                 if range_start == 0:
-                    range_start = move.mf_invoice_number
+                    range_start = move.mf_invoice_number or ""
 
                 if move.move_type == "out_invoice":
                     total_with_tax += move.amount_total if vef_base else move.foreign_amount_total
@@ -244,20 +255,17 @@ class SalesBookPOS(models.TransientModel):
 
                 lines.append(lines_to_sales_book)
 
-        not_moves = None
+        not_moves = self.env["account.move"]
 
         for retention in retention_invoices:
             for line in retention.retention_line:
                 if line.invoice_id in account_moves:
                     continue
-                if not not_moves or len(not_moves) == 0:
-                    not_moves = line.invoice_id
-                else:
-                    not_moves |= line.invoice_id
+                not_moves |= line.invoice_id
 
         lines.sort(key=lambda x: x["reportz"])
 
-        if not not_moves or len(not_moves) == 0:
+        if not not_moves:
             return lines
 
         for move in not_moves:
@@ -379,14 +387,17 @@ class SalesBookPOS(models.TransientModel):
             worksheet.set_column(5, 5, 15)
 
             # header xml
+            num_fields = len(record.sales_book_fields())
+            last_col_letter = xlsxwriter.utility.xl_col_to_name(num_fields - 1)
+
             worksheet.merge_range(
-                "D1:F1",
+                f"D1:{last_col_letter}1",
                 f"{record.company_id.name} - {record.company_id.vat}",
                 workbook.add_format({"bold": True, "center_across": True, "font_size": 18}),
             )
-            worksheet.merge_range("D2:F2", "Libro de Ventas", cell_bold)
+            worksheet.merge_range(f"D2:{last_col_letter}2", "Libro de Ventas", cell_bold)
             worksheet.merge_range(
-                "D3:F3",
+                f"D3:{last_col_letter}3",
                 (
                     f"Desde {record._format_date(record.date_from)}"
                     f" Hasta {record._format_date(record.date_to)}"
@@ -415,39 +426,10 @@ class SalesBookPOS(models.TransientModel):
                     row_end = xlsxwriter.utility.xl_rowcol_to_cell(7 + len(lines), index)
                     result_total = f"=SUM({row_start}:{row_end})"
 
-                    if field["field"] == "total_without_tax":
-                        worksheet.write_formula(13 + len(lines), 4, result_total, cell_number)
-
-                    if field["field"] == "tax_base_16":
-                        worksheet.write_formula(15 + len(lines), 4, result_total, cell_number)
-
-                    if field["field"] == "tax_amount_16":
-                        worksheet.write_formula(15 + len(lines), 5, result_total, cell_number)
-
-                    if field["field"] == "tax_base_8":
-                        worksheet.write_formula(16 + len(lines), 4, result_total, cell_number)
-
-                    if field["field"] == "tax_amount_8":
-                        worksheet.write_formula(
-                            16 + len(lines),
-                            5,
-                            result_total,
-                            cell_number,
-                        )
-
-                    if field["field"] == "tax_base_31":
-                        worksheet.write_formula(17 + len(lines), 4, result_total, cell_number)
-
-                    if field["field"] == "tax_amount_31":
-                        worksheet.write_formula(17 + len(lines), 5, result_total, cell_number)
-
-                    if field["field"] == "iva_retention":
-                        worksheet.write_formula(
-                            18 + len(lines),
-                            5,
-                            result_total,
-                            workbook.add_format({"num_format": "#,##0.00"}),
-                        )
+                    if field["field"] in self.ABSTRACT_FIELD_MAP:
+                        abs_idx, col = self.ABSTRACT_FIELD_MAP[field["field"]]
+                        row = 12 + len(lines) + abs_idx
+                        worksheet.write_formula(row, col, result_total, cell_number)
 
                     worksheet.write_formula(
                         8 + len(lines),

@@ -11,6 +11,7 @@ import re
 
 _logger = logging.getLogger(__name__)
 INIT_LINES = 7
+PASSWORD_PROTECTION = "secure"
 
 
 class WizardAccountingReportsBinauralInvoice(models.TransientModel):
@@ -745,12 +746,12 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
 
     def download_sales_book(self):
         self.ensure_one()
-        url = "/web/download_sales_book?company_id=%s" % self.company_id.id
+        url = "/web/download_sales_book?id=%s&company_id=%s" % (self.id, self.company_id.id)
         return {"type": "ir.actions.act_url", "url": url, "target": "self"}
 
     def download_purchases_book(self):
         self.ensure_one()
-        url = "/web/download_purchase_book?company_id=%s" % self.company_id.id
+        url = "/web/download_purchase_book?id=%s&company_id=%s" % (self.id, self.company_id.id)
         return {"type": "ir.actions.act_url", "url": url, "target": "self"}
 
     def _format_date(self, date):
@@ -808,6 +809,18 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
         move_model = env["account.move"]
         domain = self._get_domain()
         moves = move_model.search(domain, order=order)
+
+        domain_no_correlative = [
+            d for d in domain
+            if not (isinstance(d, (tuple, list)) and len(d) == 3 and d[0] == "correlative")
+        ]
+        total_moves = move_model.search_count(domain_no_correlative)
+        excluded = total_moves - len(moves)
+        if excluded:
+            _logger.warning(
+                "%s movimiento(s) fueron excluidos del reporte %s por no tener correlativo configurado",
+                excluded, self.report
+            )
 
         return moves
 
@@ -902,29 +915,35 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
         ]
     
     def convert_currency_to_float(self, currency_str):
-  
         if not currency_str:
             return 0.0
-        
+
         cleaned_str = str(currency_str).strip()
-       
+
         if '\xa0' in cleaned_str:
             cleaned_str = cleaned_str.split('\xa0', 1)[0]
-        
-        numeric_part = re.sub(r'[^\d,\.-]', '', cleaned_str)
-        
-        if '.' in numeric_part and ',' in numeric_part:
+
+        numeric_part = re.sub(r'[^\d,\.\-]', '', cleaned_str)
+
+        if not numeric_part:
+            return 0.0
+
+        last_dot = numeric_part.rfind('.')
+        last_comma = numeric_part.rfind(',')
+
+        if last_dot < last_comma:
             numeric_part = numeric_part.replace('.', '')
-        
-        final_value = numeric_part.replace(',', '.')
+            numeric_part = numeric_part.replace(',', '.')
+        else:
+            numeric_part = numeric_part.replace(',', '')
 
         try:
-            return float(final_value)
+            return float(numeric_part)
         except ValueError:
             _logger.warning(
                 "No se pudo convertir la cadena de moneda '%s' a float. Valor final procesado: '%s'",
                 currency_str,
-                final_value
+                numeric_part
             )
             return 0.0
 
@@ -1050,9 +1069,10 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
                     if is_credit_note:
                         base *= -1
                         tax *= -1
-                    # Identificar por ID o si el impuesto es cero (asumiendo exento si no hay config)
+                    effective_rate = abs(tax / base) if base else 0.0
+
                     is_exempt = (group_id and group_id == exent_aliquot_id) or (not exent_aliquot_id and tax == 0.0)
-                    
+
                     if is_exempt:
                         tax_base_exempt_aliquot += base
                         amount_exempt_aliquot += tax
@@ -1065,6 +1085,15 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
                         tax_base_general_aliquot += base
                         amount_general_aliquot += tax
                     elif group_id and group_id == extend_aliquot_id:
+                        tax_base_extend_aliquot += base
+                        amount_extend_aliquot += tax
+                    elif reduced_aliquot_id is None and 0.07 < effective_rate < 0.09:
+                        tax_base_reduced_aliquot += base
+                        amount_reduced_aliquot += tax
+                    elif general_aliquot_id is None and 0.15 < effective_rate < 0.17:
+                        tax_base_general_aliquot += base
+                        amount_general_aliquot += tax
+                    elif extend_aliquot_id is None and 0.30 < effective_rate < 0.32:
                         tax_base_extend_aliquot += base
                         amount_extend_aliquot += tax
                     # No deducibles
@@ -1179,9 +1208,11 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
 
         self.company_id = company_id
         sale_book_lines = self.parse_sale_book_data()
+        if not sale_book_lines:
+            raise UserError(_('No hay datos de ventas para el período seleccionado'))
         file = BytesIO()
 
-        password_protection = "secure"
+        password_protection = PASSWORD_PROTECTION
         workbook = xlsxwriter.Workbook(file, {"in_memory": True, "nan_inf_to_errors": True, "constant_memory": False})
         workbook.set_calc_mode('auto')
         worksheet = workbook.add_worksheet()
@@ -1203,31 +1234,11 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
             "percent": workbook.add_format({"num_format": "0.00%", "locked": True}),
         }
 
-        worksheet.merge_range(
-            "C1:M1",
-            f"{self.company_id.name} - {self.company_id.vat}",
-            workbook.add_format({"bold": True, "center_across": True, "font_size": 18, "locked": True}),
-        )
-        worksheet.merge_range(
-            "C2:M2",
-            f"Direccion:  {self.company_id.street}",
-            cell_bold,
-        )
-        worksheet.merge_range("C3:M3", "Libro de Ventas", cell_bold)
-        worksheet.merge_range(
-            "C4:M4",
-            (
-                f"Desde {self._format_date(self.date_from)}"
-                f" Hasta {self._format_date(self.date_to)}"
-            ),
-            cell_bold,
-        )
-
         sale_groups = self._get_sale_book_field_groups()
         flat_fields = []
         current_col_index = 0
-        color_index = 0 
-        last_col_index = 0 
+        color_index = 0
+        last_col_index = 0
 
         for group in sale_groups:
             group_fields = group['fields']
@@ -1266,9 +1277,30 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
             
             color_index += 1 
         
-        last_col_index = current_col_index - 1 
-                
-        name_columns = flat_fields 
+        last_col_index = current_col_index - 1
+
+        last_col_name = utility.xl_col_to_name(last_col_index) if last_col_index > 0 else "M"
+        worksheet.merge_range(
+            f"C1:{last_col_name}1",
+            f"{self.company_id.name} - {self.company_id.vat}",
+            workbook.add_format({"bold": True, "center_across": True, "font_size": 18, "locked": True}),
+        )
+        worksheet.merge_range(
+            f"C2:{last_col_name}2",
+            f"Direccion:  {self.company_id.street}",
+            cell_bold,
+        )
+        worksheet.merge_range(f"C3:{last_col_name}3", "Libro de Ventas", cell_bold)
+        worksheet.merge_range(
+            f"C4:{last_col_name}4",
+            (
+                f"Desde {self._format_date(self.date_from)}"
+                f" Hasta {self._format_date(self.date_to)}"
+            ),
+            cell_bold,
+        )
+
+        name_columns = flat_fields
         total_idx = INIT_LINES + 1
 
         for index, field in enumerate(name_columns):
@@ -1315,9 +1347,11 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
     def generate_purchases_book(self, company_id):
         self.company_id = company_id
         purchase_book_lines = self.parse_purchase_book_data()
+        if not purchase_book_lines:
+            raise UserError(_('No hay datos de compras para el período seleccionado'))
         file = BytesIO()
 
-        password_protection = "secure"
+        password_protection = PASSWORD_PROTECTION
         workbook = xlsxwriter.Workbook(file, {"in_memory": True, "nan_inf_to_errors": True,"constant_memory": False})
         workbook.set_calc_mode('auto') 
         worksheet = workbook.add_worksheet()
@@ -1345,26 +1379,6 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
             "percent": workbook.add_format({"num_format": "0.00%", "locked": True}),
         }
 
-        worksheet.merge_range(
-            "C1:M1",
-            f"{self.company_id.name} - {self.company_id.vat}",
-            workbook.add_format({"bold": True, "center_across": True, "font_size": 18, "locked": True}),
-        ) 
-        worksheet.merge_range(
-            "C2:M2",
-            f"Direccion:  {self.company_id.street}",
-            cell_bold,
-        )
-        worksheet.merge_range("C3:M3", "Libro de Compras", cell_bold)
-        worksheet.merge_range(
-            "C4:M4",
-            (
-                f"Desde {self._format_date(self.date_from)}"
-                f" Hasta {self._format_date(self.date_to)}"
-            ),
-            cell_bold,
-        )
-        
         purchase_groups = self._get_purchase_book_field_groups()
         flat_fields = []
         current_col_index = 0
@@ -1408,8 +1422,29 @@ class WizardAccountingReportsBinauralInvoice(models.TransientModel):
             color_index += 1 
         
         last_col_index = current_col_index - 1
-                
-        name_columns = flat_fields 
+
+        last_col_name = utility.xl_col_to_name(last_col_index) if last_col_index > 0 else "M"
+        worksheet.merge_range(
+            f"C1:{last_col_name}1",
+            f"{self.company_id.name} - {self.company_id.vat}",
+            workbook.add_format({"bold": True, "center_across": True, "font_size": 18, "locked": True}),
+        )
+        worksheet.merge_range(
+            f"C2:{last_col_name}2",
+            f"Direccion:  {self.company_id.street}",
+            cell_bold,
+        )
+        worksheet.merge_range(f"C3:{last_col_name}3", "Libro de Compras", cell_bold)
+        worksheet.merge_range(
+            f"C4:{last_col_name}4",
+            (
+                f"Desde {self._format_date(self.date_from)}"
+                f" Hasta {self._format_date(self.date_to)}"
+            ),
+            cell_bold,
+        )
+
+        name_columns = flat_fields
         total_idx = INIT_LINES + 1
 
         for index, field in enumerate(name_columns):

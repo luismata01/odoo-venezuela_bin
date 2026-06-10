@@ -1,23 +1,20 @@
 from datetime import datetime
-from odoo import http ,SUPERUSER_ID
-from odoo.api import Environment # <--- IMPORTANTE: Necesitas esta importación
+from odoo import http
 from odoo.exceptions import UserError
 
 class AccountingReportsController(http.Controller):
     @http.route("/web/download_sales_book", type="http", auth="user")
     def download_sales_book(self, **kw):
-        
-        env_request = http.request.env
-        
-        env_su = Environment(env_request.cr, SUPERUSER_ID, env_request.context)
-        
-        sale_book_model_su = env_su["wizard.accounting.reports"]
-        
+        wizard_id = kw.get("id")
+        if not wizard_id:
+            raise UserError("ID del wizard no proporcionado")
+
         company_id = int(kw.get("company_id", 1))
-        
-        sale_book = sale_book_model_su.search([], order="id desc", limit=1)
-        
-        file = sale_book.generate_sales_book(company_id)
+        wizard = http.request.env["wizard.accounting.reports"].sudo().browse(int(wizard_id))
+        if not wizard.exists():
+            raise UserError("Wizard no encontrado")
+
+        file = wizard.generate_sales_book(company_id)
 
         return http.request.make_response(
             file,
@@ -35,19 +32,17 @@ class AccountingReportsController(http.Controller):
 
     @http.route("/web/download_purchase_book", type="http", auth="user")
     def download_purchase_book(self, **kw):
-        
-        env_request = http.request.env
-        
-        env_su = Environment(env_request.cr, SUPERUSER_ID, env_request.context)
-        
-        purchase_book_model_su = env_su["wizard.accounting.reports"]
-        
+        wizard_id = kw.get("id")
+        if not wizard_id:
+            raise UserError("ID del wizard no proporcionado")
+
         company_id = int(kw.get("company_id", 1))
-        
-        purchase_book = purchase_book_model_su.search([], order="id desc", limit=1)
-        
-        file = purchase_book.generate_purchases_book(company_id)
-        
+        wizard = http.request.env["wizard.accounting.reports"].sudo().browse(int(wizard_id))
+        if not wizard.exists():
+            raise UserError("Wizard no encontrado")
+
+        file = wizard.generate_purchases_book(company_id)
+
         return http.request.make_response(
             file,
             headers=[

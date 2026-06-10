@@ -76,7 +76,7 @@ class WizardStockBookReport(models.TransientModel):
                     product_movements[product_id]["old_stock"] = old_total_stock_qty_product["total_stock_qty"]
                     product_movements[product_id]["old_stock_total"] = old_total_stock_qty_product["old_stock_total"]
 
-                if (stock_move.stock_move_id.picking_code == "incoming" and stock_move.stock_move_id.origin_returned_move_id and stock_move.stock_move_id.state == "done") or (stock_move.stock_move_id.is_inventory and stock_move.quantity>0 and stock_move.stock_move_id.state == "done") or (stock_move.stock_move_id.picking_code == "incoming" and not (stock_move.stock_move_id.origin_returned_move_id) and stock_move.stock_move_id.state == "done") or (stock_move.stock_move_id.production_id and stock_move.stock_move_id.state == "done"):
+                if (stock_move.stock_move_id.picking_code == "incoming" and stock_move.stock_move_id.origin_returned_move_id) or (stock_move.stock_move_id.is_inventory and stock_move.quantity>0) or (stock_move.stock_move_id.picking_code == "incoming" and not (stock_move.stock_move_id.origin_returned_move_id)) or (stock_move.stock_move_id.production_id):
                     product_movements[product_id]["stock_move_id"] = stock_move_id
 
                     product_movements[product_id]["incoming"] += quantity_done
@@ -84,7 +84,7 @@ class WizardStockBookReport(models.TransientModel):
                     product_movements[product_id]["incoming_total"] += stock_move.value
 
                 
-                if (stock_move.stock_move_id.picking_code == "outgoing" and stock_move.stock_move_id.origin_returned_move_id and stock_move.stock_move_id.state == "done") or (stock_move.stock_move_id.is_inventory and stock_move.quantity<0 and stock_move.stock_move_id.state == "done") or (stock_move.stock_move_id.picking_code == "outgoing" and not (stock_move.stock_move_id.origin_returned_move_id) and stock_move.stock_move_id.state == "done") or (stock_move.stock_move_id.raw_material_production_id and stock_move.stock_move_id.state =="done"):
+                if (stock_move.stock_move_id.picking_code == "outgoing" and stock_move.stock_move_id.origin_returned_move_id) or (stock_move.stock_move_id.is_inventory and stock_move.quantity<0) or (stock_move.stock_move_id.picking_code == "outgoing" and not (stock_move.stock_move_id.origin_returned_move_id)) or (stock_move.stock_move_id.raw_material_production_id):
                     product_movements[product_id]["stock_move_id"] = stock_move_id
 
                     product_movements[product_id]["outgoing"] += quantity_done
@@ -105,8 +105,6 @@ class WizardStockBookReport(models.TransientModel):
                 product_movements[product_id]["total_stock_qty_product"] += quantity_done
                 product_movements[product_id]["total_stock_qty_product_bs"] += stock_move.value
 
-                continue
-
         for product_id, movements in product_movements.items():
             stock_book_line = self._fields_stock_book_line(product_id,movements)
             stock_book_lines.append(stock_book_line)
@@ -116,7 +114,7 @@ class WizardStockBookReport(models.TransientModel):
     def get_old_stock_by_product(self,product_id):
         old_stock = self.env['stock.valuation.layer'].search([
             ("product_id","=",product_id),
-            ("create_date", "<", self.date_from),
+            ("stock_move_id.date", "<", self.date_from),
             ("stock_move_id.state", "=", "done")
         ])
 
@@ -131,7 +129,7 @@ class WizardStockBookReport(models.TransientModel):
 
     
     def search_valuation_layers(self):
-        order = "id asc"
+        order = "stock_move_id.date asc, id asc"
         env = self.env
         valuation_layer_model = env["stock.valuation.layer"]
         domain = self._get_domain_stock_move()
@@ -147,8 +145,8 @@ class WizardStockBookReport(models.TransientModel):
 
         stock_move_search_domain += [("company_id", "=", self.company_id.id)]
 
-        stock_move_search_domain += [("create_date", ">=", self.date_from)]
-        stock_move_search_domain += [("create_date", "<=", self.date_to)]
+        stock_move_search_domain += [("stock_move_id.date", ">=", self.date_from)]
+        stock_move_search_domain += [("stock_move_id.date", "<=", self.date_to)]
 
         stock_move_search_domain += [("stock_move_id.state", "=", "done")]
 

@@ -193,8 +193,6 @@ class WizardAccountingReports(models.TransientModel):
                         "tax_base_general_aliquot": 0,
                     }
                 )
-            retention_data = self.get_retention_iva_values(move.get("_id"))
-            move.update(retention_data)
 
         return data
 
@@ -215,8 +213,6 @@ class WizardAccountingReports(models.TransientModel):
                         "tax_base_extend_aliquot": 0,
                     }
                 )
-            retention_data = self.get_retention_iva_values(move.get("_id"))
-            move.update(retention_data)
 
         return data
 
