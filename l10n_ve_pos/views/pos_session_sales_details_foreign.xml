@@ -1,0 +1,18 @@
+<odoo>
+    <template id="report_saledetails_foreign" inherit_id="point_of_sale.pos_session_sales_details">
+        <xpath expr="//div[hasclass('page')]" position="inside">
+            <div class="row mt-4" t-if="foreign_total_paid">
+                <div class="col-6 offset-6">
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Foreign Total</strong></td>
+                            <td class="text-end">
+                                <t t-out="foreign_total_paid" t-options='{"widget": "monetary", "display_currency": foreign_currency}'/>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>
