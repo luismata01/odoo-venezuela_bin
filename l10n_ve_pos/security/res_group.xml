@@ -12,5 +12,12 @@
         <field name="privilege_id" ref="point_of_sale.res_groups_privilege_point_of_sale"/>
     </record>
 
+    <record id="point_of_sale.group_pos_manager" model="res.groups">
+        <field name="implied_ids" eval="[
+            (4, ref('l10n_ve_pos.group_change_qty_on_pos_order')),
+            (4, ref('l10n_ve_pos.group_change_price_on_pos_order')),
+        ]"/>
+    </record>
+
 </data>
 </odoo>
