@@ -36,6 +36,28 @@ class PosConfig(models.Model):
     )
     validate_phone_in_pos = fields.Boolean(default=False)
 
+    @api.depends("session_ids")
+    def _compute_last_session(self):
+        PosSession = self.env["pos.session"]
+        for pos_config in self:
+            session = PosSession.search_read(
+                [("config_id", "=", pos_config.id), ("state", "=", "closed")],
+                ["cash_register_balance_end_real", "stop_at"],
+                order="stop_at desc",
+                limit=1,
+            )
+            if session and session[0].get("stop_at"):
+                timezone = self.env.tz
+                pos_config.last_session_closing_date = (
+                    session[0]["stop_at"].astimezone(timezone).date()
+                )
+                pos_config.last_session_closing_cash = session[0][
+                    "cash_register_balance_end_real"
+                ]
+            else:
+                pos_config.last_session_closing_cash = 0
+                pos_config.last_session_closing_date = False
+
     @api.depends("foreign_currency_id")
     def _compute_rate(self):
         """
