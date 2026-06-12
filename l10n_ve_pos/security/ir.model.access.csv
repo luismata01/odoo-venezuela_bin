@@ -1,6 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_pos_payment_report,access_pos_payment_report,model_pos_payment_report,,1,1,1,1
-access_economic_activity_pos_user,economic.activity pos user,model_economic_activity,point_of_sale.group_pos_user,1,0,0,0
-access_economic_activity_pos_manager,economic.activity pos manager,model_economic_activity,point_of_sale.group_pos_manager,1,0,0,0
-access_economic_branch_pos_user,economic.branch pos user,model_economic_branch,point_of_sale.group_pos_user,1,0,0,0
-access_economic_branch_pos_manager,economic.branch pos manager,model_economic_branch,point_of_sale.group_pos_manager,1,0,0,0
+access_economic_activity_pos_user,economic.activity pos user,l10n_ve_payment_extension.model_economic_activity,point_of_sale.group_pos_user,1,0,0,0
+access_economic_activity_pos_manager,economic.activity pos manager,l10n_ve_payment_extension.model_economic_activity,point_of_sale.group_pos_manager,1,0,0,0
+access_economic_branch_pos_user,economic.branch pos user,l10n_ve_payment_extension.model_economic_branch,point_of_sale.group_pos_user,1,0,0,0
+access_economic_branch_pos_manager,economic.branch pos manager,l10n_ve_payment_extension.model_economic_branch,point_of_sale.group_pos_manager,1,0,0,0
