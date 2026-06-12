@@ -1,0 +1,49 @@
+import logging
+
+from odoo import api, models
+
+_logger = logging.getLogger(__name__)
+
+
+class ResCompany(models.Model):
+    _inherit = "res.company"
+
+    def update_currency_rates(self):
+        result = super().update_currency_rates()
+        bcv_companies = self.filtered(lambda c: c.currency_provider == "bcv")
+        if bcv_companies:
+            bcv_companies._sync_replenishment_costs()
+        return result
+
+    def _sync_replenishment_costs(self):
+        for company in self:
+            products = self.env["product.template"].search([
+                ("company_id", "in", [company.id, False]),
+                ("replenishment_cost_type", "in", [
+                    "supplier_price", "last_supplier_price", "manual",
+                ]),
+            ])
+
+            affected = products.filtered(
+                lambda p: self._is_cost_in_foreign_currency(p, company)
+            )
+
+            if affected:
+                _logger.info(
+                    "Syncing replenishment costs for company %s: %d products",
+                    company.name, len(affected),
+                )
+                affected.with_company(company=company).with_context(
+                    bypass_base_automation=True,
+                    tracking_disable=True,
+                )._update_cost_from_replenishment_cost()
+
+    @api.model
+    def _is_cost_in_foreign_currency(self, product, company):
+        if product.replenishment_cost_type in ["supplier_price", "last_supplier_price"]:
+            base_currency = product.supplier_currency_id
+        elif product.replenishment_cost_type == "manual":
+            base_currency = product.replenishment_base_cost_currency_id
+        else:
+            return False
+        return bool(base_currency) and base_currency != product.currency_id
