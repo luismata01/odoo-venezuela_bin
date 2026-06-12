@@ -2,8 +2,6 @@ from datetime import datetime
 
 import xlsxwriter
 from odoo import _, api, models
-from odoo.osv import expression
-
 import logging
 
 _logger = logging.getLogger(__name__)
