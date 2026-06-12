@@ -18,6 +18,7 @@
         "l10n_ve_stock",
         "l10n_ve_location",
         "l10n_ve_accountant",
+        "l10n_ve_payment_extension",
     ],
     # always loaded
     "data": [
