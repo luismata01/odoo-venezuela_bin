@@ -17,6 +17,9 @@ class ProductTemplate(models.Model):
 
     @api.onchange("list_price_usd")
     def onchange_price_bs(self):
+        self._sync_list_price_from_usd()
+
+    def _sync_list_price_from_usd(self):
         company = self.env.company
         if not company:
             return
@@ -27,3 +30,29 @@ class ProductTemplate(models.Model):
             return
         rate = usd._get_conversion_rate(usd, target, company, date.today())
         self.list_price = self.list_price_usd * (rate or 1)
+
+    @api.model
+    def create(self, vals):
+        if 'list_price_usd' in vals and 'list_price' not in vals:
+            usd = self.env.ref("base.USD")
+            company = self.env.company
+            target = company.currency_id
+            if target and usd != target:
+                rate = usd._get_conversion_rate(usd, target, company, date.today())
+                vals['list_price'] = vals['list_price_usd'] * (rate or 1)
+            else:
+                vals['list_price'] = vals['list_price_usd']
+        return super().create(vals)
+
+    def write(self, vals):
+        if 'list_price_usd' in vals and 'list_price' not in vals:
+            usd = self.env.ref("base.USD")
+            for record in self:
+                company = record.company_id or self.env.company
+                target = company.currency_id
+                if target and usd != target:
+                    rate = usd._get_conversion_rate(usd, target, company, date.today())
+                    record.list_price = vals['list_price_usd'] * (rate or 1)
+                else:
+                    record.list_price = vals['list_price_usd']
+        return super().write(vals)
