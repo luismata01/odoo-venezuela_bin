@@ -38,6 +38,7 @@ class ResCompany(models.Model):
                     tracking_disable=True,
                 )
                 affected._compute_replenishment_cost()
+                affected._compute_replenishment_cost()
                 affected._update_cost_from_replenishment_cost()
 
     @api.model
