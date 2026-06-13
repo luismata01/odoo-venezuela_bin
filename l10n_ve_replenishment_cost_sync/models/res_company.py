@@ -1,5 +1,7 @@
 import logging
 
+from datetime import date
+
 from odoo import api, models
 
 _logger = logging.getLogger(__name__)
@@ -13,6 +15,7 @@ class ResCompany(models.Model):
         bcv_companies = self.filtered(lambda c: c.currency_provider == "bcv")
         if bcv_companies:
             bcv_companies._sync_replenishment_costs()
+            bcv_companies._sync_prices_from_usd()
         return result
 
     def _sync_replenishment_costs(self):
@@ -40,6 +43,36 @@ class ResCompany(models.Model):
                 affected._compute_replenishment_cost()
                 affected._compute_replenishment_cost()
                 affected._update_cost_from_replenishment_cost()
+
+    def _sync_prices_from_usd(self):
+        usd = self.env.ref("base.USD")
+        rate = (
+            self.env["res.currency.rate"]
+            .search([
+                ("name", "<=", date.today()),
+                ("currency_id", "=", usd.id),
+            ], limit=1)
+            .rate
+        )
+        if not rate:
+            _logger.warning("No USD rate found for _sync_prices_from_usd")
+            return
+        for company in self:
+            products = self.env["product.template"].search([
+                ("company_id", "in", [company.id, False]),
+                ("list_price_usd", ">", 0),
+            ])
+            if products:
+                _logger.info(
+                    "Syncing USD prices for company %s: %d products",
+                    company.name, len(products),
+                )
+                products = products.with_company(company=company).with_context(
+                    bypass_base_automation=True,
+                    tracking_disable=True,
+                )
+                for p in products:
+                    p.list_price = p.list_price_usd * rate
 
     @api.model
     def _is_cost_in_foreign_currency(self, product, company):

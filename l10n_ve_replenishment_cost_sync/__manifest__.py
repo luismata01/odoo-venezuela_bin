@@ -10,7 +10,9 @@
         "product_replenishment_cost",
         "l10n_ve_currency_rate_live",
     ],
-    "data": [],
+    "data": [
+        "views/product_template_views.xml",
+    ],
     "auto_install": False,
     "installable": True,
 }
