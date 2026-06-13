@@ -71,6 +71,7 @@ class ResCompany(models.Model):
                 )
                 for p in products:
                     p.list_price = p.list_price_usd * rate
+        self.env.cr.commit()
 
     @api.model
     def _is_cost_in_foreign_currency(self, product, company):
