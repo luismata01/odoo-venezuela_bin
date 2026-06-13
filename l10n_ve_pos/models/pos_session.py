@@ -57,6 +57,7 @@ class PosSession(models.Model):
         params = super()._loader_params_product_product()
         params["search_params"]["fields"].append("free_qty")
         params["search_params"]["fields"].append("qty_available")
+        params["search_params"]["fields"].append("list_price_usd")
         params["context"] = {
             **params["context"],
             "warehouse": self.config_id.picking_type_id.warehouse_id.id,

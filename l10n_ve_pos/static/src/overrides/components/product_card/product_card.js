@@ -27,10 +27,15 @@ patch(ProductCard.prototype, {
       if (!config?.foreign_currency_id) {
         return "";
       }
-      const local_price = product?.list_price || product?.lst_price || 0;
-      const display_rate = config?.foreign_rate || 0;
-      const rate = config?.foreign_inverse_rate || (display_rate ? 1.0 / display_rate : 0);
-      const foreign_price = local_price * rate;
+      let foreign_price;
+      if (product?.list_price_usd) {
+        foreign_price = product.list_price_usd;
+      } else {
+        const local_price = product?.list_price || product?.lst_price || 0;
+        const display_rate = config?.foreign_rate || 0;
+        const rate = config?.foreign_inverse_rate || (display_rate ? 1.0 / display_rate : 0);
+        foreign_price = local_price * rate;
+      }
       if (typeof this.env.utils?.formatForeignCurrency !== "function") {
         return "";
       }

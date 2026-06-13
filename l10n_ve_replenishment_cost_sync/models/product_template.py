@@ -15,44 +15,35 @@ class ProductTemplate(models.Model):
         "res.currency", "USD", default=_set_currency_usd_id
     )
 
+    @api.model
+    def _get_usd_rate(self, company=None):
+        company = company or self.env.company
+        usd = self.env.ref("base.USD")
+        if not company.currency_id or usd == company.currency_id:
+            return 1.0
+        rate_rec = self.env["res.currency.rate"].search([
+            ("currency_id", "=", usd.id),
+            ("company_id", "=", company.id),
+            ("name", "<=", date.today()),
+        ], limit=1)
+        return rate_rec.inverse_company_rate if rate_rec else 1.0
+
     @api.onchange("list_price_usd")
     def onchange_price_bs(self):
-        self._sync_list_price_from_usd()
-
-    def _sync_list_price_from_usd(self):
         company = self.env.company
         if not company:
             return
-        usd = self.env.ref("base.USD")
-        target = company.currency_id
-        if not target or usd == target:
-            self.list_price = self.list_price_usd
-            return
-        rate = usd._get_conversion_rate(usd, target, company, date.today())
-        self.list_price = self.list_price_usd * (rate or 1)
+        self.list_price = self.list_price_usd * self._get_usd_rate(company)
 
     @api.model
     def create(self, vals):
         if 'list_price_usd' in vals and 'list_price' not in vals:
-            usd = self.env.ref("base.USD")
-            company = self.env.company
-            target = company.currency_id
-            if target and usd != target:
-                rate = usd._get_conversion_rate(usd, target, company, date.today())
-                vals['list_price'] = vals['list_price_usd'] * (rate or 1)
-            else:
-                vals['list_price'] = vals['list_price_usd']
+            vals['list_price'] = vals['list_price_usd'] * self._get_usd_rate()
         return super().create(vals)
 
     def write(self, vals):
         if 'list_price_usd' in vals and 'list_price' not in vals:
-            usd = self.env.ref("base.USD")
             for record in self:
                 company = record.company_id or self.env.company
-                target = company.currency_id
-                if target and usd != target:
-                    rate = usd._get_conversion_rate(usd, target, company, date.today())
-                    record.list_price = vals['list_price_usd'] * (rate or 1)
-                else:
-                    record.list_price = vals['list_price_usd']
+                record.list_price = vals['list_price_usd'] * self._get_usd_rate(company)
         return super().write(vals)

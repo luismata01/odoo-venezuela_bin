@@ -45,21 +45,25 @@ class ResCompany(models.Model):
                 affected._update_cost_from_replenishment_cost()
 
     def _sync_prices_from_usd(self):
-        usd = self.env.ref("base.USD")
         for company in self:
-            target = company.currency_id
-            rate = usd._get_conversion_rate(usd, target, company, date.today())
-            if not rate:
-                _logger.warning("No USD rate found for company %s", company.name)
+            usd = self.env.ref("base.USD")
+            rate_rec = self.env["res.currency.rate"].search([
+                ("currency_id", "=", usd.id),
+                ("company_id", "=", company.id),
+                ("name", "<=", date.today()),
+            ], limit=1)
+            if not rate_rec:
+                _logger.warning("No USD rate record found for company %s", company.name)
                 continue
+            rate = rate_rec.inverse_company_rate
             products = self.env["product.template"].search([
                 ("company_id", "in", [company.id, False]),
                 ("list_price_usd", ">", 0),
             ])
             if products:
                 _logger.info(
-                    "Syncing USD prices for company %s: %d products",
-                    company.name, len(products),
+                    "Syncing USD prices for company %s: %d products, rate=%s",
+                    company.name, len(products), rate,
                 )
                 products = products.with_company(company=company).with_context(
                     bypass_base_automation=True,

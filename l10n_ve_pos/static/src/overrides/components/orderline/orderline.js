@@ -163,6 +163,7 @@ patch(Orderline.prototype, {
   get_lst_foreign_price() {
     const product = this.getProduct();
     if (!product) return 0;
+    if (product.list_price_usd) return product.list_price_usd;
     const lstPrice = product.lst_price || 0;
     return lstPrice * this.get_rate();
   },
