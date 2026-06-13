@@ -20,7 +20,7 @@ class ResCompany(models.Model):
             products = self.env["product.template"].search([
                 ("company_id", "in", [company.id, False]),
                 ("replenishment_cost_type", "in", [
-                    "supplier_price", "last_supplier_price", "manual",
+                    "supplier_price", "last_supplier_price", "manual", "bom",
                 ]),
             ])
 
@@ -33,6 +33,10 @@ class ResCompany(models.Model):
                     "Syncing replenishment costs for company %s: %d products",
                     company.name, len(affected),
                 )
+                affected.invalidate_cache([
+                    "replenishment_cost",
+                    "replenishment_base_cost_on_currency",
+                ])
                 affected.with_company(company=company).with_context(
                     bypass_base_automation=True,
                     tracking_disable=True,
@@ -40,7 +44,9 @@ class ResCompany(models.Model):
 
     @api.model
     def _is_cost_in_foreign_currency(self, product, company):
-        if product.replenishment_cost_type in ["supplier_price", "last_supplier_price"]:
+        if product.replenishment_cost_type == "bom":
+            return True
+        elif product.replenishment_cost_type in ["supplier_price", "last_supplier_price"]:
             base_currency = product.supplier_currency_id
         elif product.replenishment_cost_type == "manual":
             base_currency = product.replenishment_base_cost_currency_id
