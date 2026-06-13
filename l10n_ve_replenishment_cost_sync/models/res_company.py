@@ -33,10 +33,10 @@ class ResCompany(models.Model):
                     "Syncing replenishment costs for company %s: %d products",
                     company.name, len(affected),
                 )
-                affected.invalidate_cache([
-                    "replenishment_cost",
-                    "replenishment_base_cost_on_currency",
-                ])
+                self.env["product.template"].invalidate_cache(
+                    fnames=["replenishment_cost", "replenishment_base_cost_on_currency"],
+                    ids=affected.ids,
+                )
                 affected.with_company(company=company).with_context(
                     bypass_base_automation=True,
                     tracking_disable=True,
