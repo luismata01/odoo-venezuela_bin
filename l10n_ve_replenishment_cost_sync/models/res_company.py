@@ -33,14 +33,12 @@ class ResCompany(models.Model):
                     "Syncing replenishment costs for company %s: %d products",
                     company.name, len(affected),
                 )
-                self.env["product.template"].invalidate_cache(
-                    fnames=["replenishment_cost", "replenishment_base_cost_on_currency"],
-                    ids=affected.ids,
-                )
-                affected.with_company(company=company).with_context(
+                affected = affected.with_company(company=company).with_context(
                     bypass_base_automation=True,
                     tracking_disable=True,
-                )._update_cost_from_replenishment_cost()
+                )
+                affected._compute_replenishment_cost()
+                affected._update_cost_from_replenishment_cost()
 
     @api.model
     def _is_cost_in_foreign_currency(self, product, company):
