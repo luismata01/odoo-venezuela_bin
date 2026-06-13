@@ -17,12 +17,13 @@ class ProductTemplate(models.Model):
 
     @api.onchange("list_price_usd")
     def onchange_price_bs(self):
-        rate = (
-            self.env["res.currency.rate"]
-            .search([
-                ("name", "<=", date.today()),
-                ("currency_id", "=", self.currency_usd_id.id),
-            ], limit=1)
-            .rate
-        )
+        company = self.env.company
+        if not company:
+            return
+        usd = self.env.ref("base.USD")
+        target = company.currency_id
+        if not target or usd == target:
+            self.list_price = self.list_price_usd
+            return
+        rate = usd._get_conversion_rate(usd, target, company, date.today())
         self.list_price = self.list_price_usd * (rate or 1)

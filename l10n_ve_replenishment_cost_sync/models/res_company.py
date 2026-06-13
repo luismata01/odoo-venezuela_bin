@@ -46,18 +46,12 @@ class ResCompany(models.Model):
 
     def _sync_prices_from_usd(self):
         usd = self.env.ref("base.USD")
-        rate = (
-            self.env["res.currency.rate"]
-            .search([
-                ("name", "<=", date.today()),
-                ("currency_id", "=", usd.id),
-            ], limit=1)
-            .rate
-        )
-        if not rate:
-            _logger.warning("No USD rate found for _sync_prices_from_usd")
-            return
         for company in self:
+            target = company.currency_id
+            rate = usd._get_conversion_rate(usd, target, company, date.today())
+            if not rate:
+                _logger.warning("No USD rate found for company %s", company.name)
+                continue
             products = self.env["product.template"].search([
                 ("company_id", "in", [company.id, False]),
                 ("list_price_usd", ">", 0),
