@@ -31,7 +31,12 @@
         "views/account_move_views.xml",
         "wizards/accounting_reports_views.xml",
     ],
-    "assets": {"web.assets_backend": ["l10n_ve_iot_mf/static/src/js/*.js"]},
+    "assets": {
+        "web.assets_backend": [
+            "l10n_ve_iot_mf/static/src/js/iot_fiscal_machine.js",
+            "l10n_ve_iot_mf/static/src/js/iot_longpolling.js",
+        ],
+    },
     "installable": True,
     "application": False,
     "auto_install": False,
