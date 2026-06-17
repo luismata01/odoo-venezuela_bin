@@ -4,7 +4,7 @@ import { Widget } from "@web/views/widgets/widget";
 import { registry } from "@web/core/registry";
 import { DeviceController } from "@iot/device_controller";
 import { useService } from "@web/core/utils/hooks";
-import { Component, onWillStart } from "@odoo/owl";
+import { Component, onWillStart, xml, useState } from "@odoo/owl";
 import { _t } from "@web/core/l10n/translation";
 import { IoTConnectionErrorDialog } from '@iot/iot_connection_error_dialog';
 
@@ -26,8 +26,6 @@ function onIoTActionResult(data, notification) {
   }
 }
 
-
-const { xml, useState } = owl;
 
 export class IoTFiscalMachineComponent extends Component {
   setup() {
