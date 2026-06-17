@@ -41,7 +41,9 @@ def execute_script_sql_two(env, new_name, old_name):
         (new_module, new_name, old_name)
     )
 def set_main_company_currency_to_vef(env):
-    company = env.ref("base.main_company", raise_if_not_found=False)
-    vef = env.ref("base.VEF", raise_if_not_found=False)
-    if company and vef:
-        company.currency_id = vef.id
+    env.cr.execute("""
+        UPDATE res_company
+        SET currency_id = (SELECT id FROM res_currency WHERE name = 'VEF' LIMIT 1)
+        WHERE id = (SELECT res_id FROM ir_model_data
+                    WHERE module = 'base' AND name = 'main_company')
+    """)
