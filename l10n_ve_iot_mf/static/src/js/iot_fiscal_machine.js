@@ -2,11 +2,11 @@
 
 import { Widget } from "@web/views/widgets/widget";
 import { registry } from "@web/core/registry";
-import { DeviceController } from "@iot/device_controller";
+import { DeviceController } from "@iot_base/device_controller";
 import { useService } from "@web/core/utils/hooks";
 import { Component, onWillStart, xml, useState } from "@odoo/owl";
 import { _t } from "@web/core/l10n/translation";
-import { IoTConnectionErrorDialog } from '@iot/iot_connection_error_dialog';
+import { Dialog } from "@web/core/dialog/dialog";
 
 const PRINT_ACTIONS = Object.freeze({
   OUT_INVOICE: "print_out_invoice",
@@ -68,7 +68,10 @@ export class IoTFiscalMachineComponent extends Component {
 
   }
   showFailedConnection() {
-    this.dialog.add(IoTConnectionErrorDialog, { href: url });
+    this.dialog.add(Dialog, {
+      title: _t("Connection Error"),
+      body: _t("Check if the printer is still connected"),
+    });
   }
   get iotDevice() {
     return this.device
@@ -467,8 +470,11 @@ export class IoTFiscalMachineComponent extends Component {
     });
   }
 
-  doWarnFail(url) {
-    this.dialog.add(IoTConnectionErrorDialog, { href: url });
+  doWarnFail() {
+    this.dialog.add(Dialog, {
+      title: _t("Connection Error"),
+      body: _t("Check if the printer is still connected"),
+    });
   }
 }
 
