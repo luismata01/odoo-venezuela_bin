@@ -404,7 +404,7 @@ class AccountFiscalyearClosingConfig(models.Model):
             dest_totals.setdefault(dest, 0)
             src_accounts = self.env["account.account"].search(
                 [
-                    ("company_id", "=", self.fyc_id.company_id.id),
+                    ("company_ids", "in", [self.fyc_id.company_id.id]),
                     ("code", "=ilike", account_map.src_accounts),
                 ],
                 order="code ASC",

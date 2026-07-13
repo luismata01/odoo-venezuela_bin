@@ -8,7 +8,7 @@
     """,
     "license": "LGPL-3",
     "category": "Accounting",
-    "version": "19.0.1.1.0",
+    "version": "19.0.1.0.1",
     "author": "binaural-dev",
     "website": "https://binauraldev.com",
     "depends": [
@@ -31,12 +31,7 @@
         "views/account_move_views.xml",
         "wizards/accounting_reports_views.xml",
     ],
-    "assets": {
-        "web.assets_backend": [
-            "l10n_ve_iot_mf/static/src/js/iot_fiscal_machine.js",
-            "l10n_ve_iot_mf/static/src/js/iot_longpolling.js",
-        ],
-    },
+    "assets": {"web.assets_backend": ["l10n_ve_iot_mf/static/src/js/*.js"]},
     "installable": True,
     "application": False,
     "auto_install": False,

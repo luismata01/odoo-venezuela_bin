@@ -7,7 +7,7 @@
     "author": "binaural-dev, TELETRABAJOVE, Ing. Luis Magin Mata C.",
     "website": "https://www.binauraldev.com",
     "category": "Stock",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "depends": [
         "stock",
         "product",

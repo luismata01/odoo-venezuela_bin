@@ -59,6 +59,7 @@ patch(TaxTotalsComponent.prototype, {
               taxGroup.base_amount_currency,
               currencyFmtOpts,
             );
+            // Solo VEES
             taxGroup.formatted_tax_amount_currency_ves =
               taxGroup.formatted_tax_amount_currency_ves;
           }
@@ -97,9 +98,7 @@ class TaxForeignTotalsComponent extends TaxTotalsComponent {
   }
 }
 TaxForeignTotalsComponent.template = "l10n_ve_accountant.TaxForeignTotalsField";
-TaxForeignTotalsComponent.props = {
-  ...standardFieldProps,
-};
+TaxForeignTotalsComponent.props = { ...standardFieldProps };
 
 class TaxVesTotalsComponent extends TaxTotalsComponent {
   get readonly() {
@@ -107,24 +106,18 @@ class TaxVesTotalsComponent extends TaxTotalsComponent {
   }
 }
 TaxVesTotalsComponent.template = "l10n_ve_accountant.TaxVesTotalsField";
-TaxVesTotalsComponent.props = {
-  ...standardFieldProps,
-};
-
-export const taxForeignTotalsComponent = {
-  component: TaxForeignTotalsComponent,
-};
-
-export const taxVesTotalsComponent = {
-  component: TaxVesTotalsComponent,
-};
+TaxVesTotalsComponent.props = { ...standardFieldProps };
 
 const fieldsRegistry = registry.category("fields");
 
 if (!fieldsRegistry.contains("account-tax-foreign-totals-field")) {
-  fieldsRegistry.add("account-tax-foreign-totals-field", taxForeignTotalsComponent);
+  fieldsRegistry.add("account-tax-foreign-totals-field", {
+    component: TaxForeignTotalsComponent,
+  });
 }
 
 if (!fieldsRegistry.contains("account-tax-ves-totals-field")) {
-  fieldsRegistry.add("account-tax-ves-totals-field", taxVesTotalsComponent);
+  fieldsRegistry.add("account-tax-ves-totals-field", {
+    component: TaxVesTotalsComponent,
+  });
 }

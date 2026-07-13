@@ -180,7 +180,7 @@ class AccountFiscalyearClosing(models.Model):
             .search(
                 [
                     ("account_type", "=", "equity_unaffected"),
-                    ("company_ids", "in", [self.company_id.id]),
+                    ("company_ids", "in", [self.company_id.id, False]),
                 ],
                 limit=1,
             )
@@ -335,7 +335,7 @@ class AccountFiscalyearClosingMapping(models.Model):
                     "date": date,
                     "partner_id": partner_id,
                     "foreign_rate": rate,
-                    "foreign_inverse_rate": (rate if bsd_id == foreign_currency.id else (1 / rate if rate else 0)),
+                    "foreign_inverse_rate": (rate if bsd_id == foreign_currency.id else 1 / rate),
                 }
             else:
                 balance = 0
