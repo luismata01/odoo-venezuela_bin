@@ -140,14 +140,7 @@
 
                                 <t t-foreach="lines" t-as="line">
 
-                                    <t t-if="base_vef">
-                                        <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal" groups="account.group_show_line_subtotals_tax_excluded"/>
-                                        <t t-set="current_subtotal" t-value="current_subtotal + line.price_total" groups="account.group_show_line_subtotals_tax_included"/>
-                                    </t>
-                                    <t t-else="">
-                                        <t t-set="current_subtotal" t-value="current_subtotal + line.foreign_subtotal" groups="account.group_show_line_subtotals_tax_excluded"/>
-                                        <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal" groups="account.group_show_line_subtotals_tax_included"/>
-                                    </t>
+                                    <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
 
                                     <tr t-att-class="'bg-200 fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
                                         <t t-if="line.display_type == 'product'" name="account_invoice_line_accountable">
@@ -165,7 +158,12 @@
                                                 <span t-field="line.product_uom_id"  groups="uom.group_uom"/>
                                             </td>
                                             <td t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
-                                                <span class="text-nowrap" t-field="line.price_unit_ves"/>
+                                                <t t-if="base_vef">
+                                                    <span class="text-nowrap" t-field="line.price_unit_ves"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="text-nowrap" t-field="line.price_unit"/>
+                                                </t>
                                             </td>
                                             <td t-if="display_discount" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
                                                 <span class="text-nowrap" t-field="line.discount"/>
@@ -185,6 +183,17 @@
                                             </td>
                                         </t>
                                         <t t-if="line.display_type == 'line_section'">
+                                            <t t-if="current_section and current_subtotal > 0">
+                                                <tr class="is-subtotal text-end">
+                                                    <td colspan="99">
+                                                        <strong class="mr16">Subtotal</strong>
+                                                        <span
+                                                            t-out="current_subtotal"
+                                                            t-options='{"widget": "monetary", "display_currency": o.currency_id if not base_vef else o.env["res.currency"].browse(%(base.VEF)s)}'
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            </t>
                                             <td colspan="99">
                                                 <span t-field="line.name" t-options="{'widget': 'text'}"/>
                                             </td>
@@ -204,7 +213,7 @@
                                                 <strong class="mr16">Subtotal</strong>
                                                 <span
                                                     t-out="current_subtotal"
-                                                    t-options='{"widget": "monetary", "display_currency": %(base.VEF)s}'
+                                                    t-options='{"widget": "monetary", "display_currency": o.currency_id if not base_vef else o.env["res.currency"].browse(%(base.VEF)s)}'
                                                 />
                                             </td>
                                         </tr>
@@ -255,7 +264,7 @@
                             A los efectos de lo previsto en el <strong>Art. 25</strong> de la Ley de
                             Impuesto al Valor Agregado se expresa el monto total
                             de la factura en <strong><span t-out="o.currency_id.name"/></strong> calculado a la tasa de cambio
-                            establecida por BCV de 1<span t-out="o.currency_id.name"/> <span t-out="o.currency_id.symbol"/> por <strong><t t-out="o.company_currency_rate" t-options='{"widget": "monetary", "display_currency": o.env["res.currency"].browse(int(%(base.VEF)s))}'/></strong>
+                            establecida por BCV de 1<span t-out="o.currency_id.name"/> <span t-out="o.currency_id.symbol"/> por <strong><t t-out="o.move_currency_to_company_currency_rate" t-options='{"widget": "monetary", "display_currency": o.env["res.currency"].browse(int(%(base.VEF)s))}'/></strong>
                         </span>
                     </div>
                     

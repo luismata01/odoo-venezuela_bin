@@ -52,7 +52,7 @@ class AccountTax(models.Model):
         company_rate = 1.0
         has_discount= False
         if active_model == "account.move" and record.move_type in ("out_invoice", "in_invoice", "out_refund", "in_refund"):
-            company_rate = record.company_currency_rate
+            company_rate = record.move_currency_to_company_currency_rate
             currency_id = record.currency_id
             foreign_currency_id =record.foreign_currency_id
             has_discount = any(
@@ -135,22 +135,45 @@ class AccountTax(models.Model):
             currency_obj=currency_id
         )
 
-        #only VES amounts
-        res['formatted_base_amount_currency_ves'] = formatLang(
-            env=self.env,
-            value=res.get('base_amount', 0.0),
-            currency_obj=ves_currency
-        )
-        res['formatted_tax_amount_currency_ves'] = formatLang(
-            env=self.env,
-            value=res.get('tax_amount', 0.0),
-            currency_obj=ves_currency
-        )
-        res['formatted_total_amount_currency_ves'] = formatLang(
-            env=self.env,
-            value=res.get('total_amount', 0.0),
-            currency_obj=ves_currency
-        )
+        #only VES amounts - Recalculate using move_currency_to_company_currency_rate
+        if active_model == "account.move" and record.move_type in ("out_invoice", "in_invoice", "out_refund", "in_refund"):
+            # Recalculate VES amounts using the correct rate from move_currency_to_company_currency_rate
+            correct_rate = record.move_currency_to_company_currency_rate
+            base_amount_ves = res.get('base_amount_currency', 0.0) * correct_rate
+            tax_amount_ves = res.get('tax_amount_currency', 0.0) * correct_rate
+            total_amount_ves = res.get('total_amount_currency', 0.0) * correct_rate
+            
+            res['formatted_base_amount_currency_ves'] = formatLang(
+                env=self.env,
+                value=base_amount_ves,
+                currency_obj=ves_currency
+            )
+            res['formatted_tax_amount_currency_ves'] = formatLang(
+                env=self.env,
+                value=tax_amount_ves,
+                currency_obj=ves_currency
+            )
+            res['formatted_total_amount_currency_ves'] = formatLang(
+                env=self.env,
+                value=total_amount_ves,
+                currency_obj=ves_currency
+            )
+        else:
+            res['formatted_base_amount_currency_ves'] = formatLang(
+                env=self.env,
+                value=res.get('base_amount', 0.0),
+                currency_obj=ves_currency
+            )
+            res['formatted_tax_amount_currency_ves'] = formatLang(
+                env=self.env,
+                value=res.get('tax_amount', 0.0),
+                currency_obj=ves_currency
+            )
+            res['formatted_total_amount_currency_ves'] = formatLang(
+                env=self.env,
+                value=res.get('total_amount', 0.0),
+                currency_obj=ves_currency
+            )
     
         # Foraneos
         res['formatted_base_amount_foreign_currency'] = formatLang(
@@ -190,22 +213,44 @@ class AccountTax(models.Model):
                 value=res_subtotal.get('total_amount_foreign_currency', 0.0),
                 currency_obj=foreign_currency_id
             )
-            #ONLY VES
-            res_subtotal['formatted_base_amount_currency_ves'] = formatLang(
-                env=self.env,
-                value=res_subtotal.get('base_amount', 0.0),
-                currency_obj=ves_currency
-            )
-            res_subtotal['formatted_tax_amount_currency_ves'] = formatLang(
-                env=self.env,
-                value=res_subtotal.get('tax_amount', 0.0),
-                currency_obj=ves_currency
-            )
-            res_subtotal['formatted_total_amount_currency_ves'] = formatLang(
-                env=self.env,
-                value=res_subtotal.get('total_amount', 0.0),
-                currency_obj=ves_currency
-            )
+            #ONLY VES - Recalculate using move_currency_to_company_currency_rate
+            if active_model == "account.move" and record.move_type in ("out_invoice", "in_invoice", "out_refund", "in_refund"):
+                correct_rate = record.move_currency_to_company_currency_rate
+                subtotal_base_ves = res_subtotal.get('base_amount_currency', 0.0) * correct_rate
+                subtotal_tax_ves = res_subtotal.get('tax_amount_currency', 0.0) * correct_rate
+                subtotal_total_ves = res_subtotal.get('total_amount_currency', 0.0) * correct_rate
+                
+                res_subtotal['formatted_base_amount_currency_ves'] = formatLang(
+                    env=self.env,
+                    value=subtotal_base_ves,
+                    currency_obj=ves_currency
+                )
+                res_subtotal['formatted_tax_amount_currency_ves'] = formatLang(
+                    env=self.env,
+                    value=subtotal_tax_ves,
+                    currency_obj=ves_currency
+                )
+                res_subtotal['formatted_total_amount_currency_ves'] = formatLang(
+                    env=self.env,
+                    value=subtotal_total_ves,
+                    currency_obj=ves_currency
+                )
+            else:
+                res_subtotal['formatted_base_amount_currency_ves'] = formatLang(
+                    env=self.env,
+                    value=res_subtotal.get('base_amount', 0.0),
+                    currency_obj=ves_currency
+                )
+                res_subtotal['formatted_tax_amount_currency_ves'] = formatLang(
+                    env=self.env,
+                    value=res_subtotal.get('tax_amount', 0.0),
+                    currency_obj=ves_currency
+                )
+                res_subtotal['formatted_total_amount_currency_ves'] = formatLang(
+                    env=self.env,
+                    value=res_subtotal.get('total_amount', 0.0),
+                    currency_obj=ves_currency
+                )
             #Base sistema
             res_subtotal['formatted_base_amount_currency'] = formatLang(
                 env=self.env,
@@ -245,22 +290,44 @@ class AccountTax(models.Model):
                     value=res_tax_group.get('display_base_amount_currency', 0.0),
                     currency_obj=currency_id
                 )
-                #ONLY VES
-                res_tax_group['formatted_base_amount_currency_ves'] = formatLang(
-                    env=self.env,
-                    value=res_tax_group.get('base_amount', 0.0),
-                    currency_obj=ves_currency
-                )
-                res_tax_group['formatted_tax_amount_currency_ves'] = formatLang(
-                    env=self.env,
-                    value=res_tax_group.get('tax_amount', 0.0),
-                    currency_obj=ves_currency
-                )
-                res_tax_group['formatted_total_amount_currency_ves'] = formatLang(
-                    env=self.env,
-                    value=res_tax_group.get('total_amount', 0.0),
-                    currency_obj=ves_currency
-                )
+                #ONLY VES - Recalculate using move_currency_to_company_currency_rate
+                if active_model == "account.move" and record.move_type in ("out_invoice", "in_invoice", "out_refund", "in_refund"):
+                    correct_rate = record.move_currency_to_company_currency_rate
+                    tax_group_base_ves = res_tax_group.get('base_amount_currency', 0.0) * correct_rate
+                    tax_group_tax_ves = res_tax_group.get('tax_amount_currency', 0.0) * correct_rate
+                    tax_group_total_ves = res_tax_group.get('total_amount_currency', 0.0) * correct_rate if res_tax_group.get('total_amount_currency') else 0.0
+                    
+                    res_tax_group['formatted_base_amount_currency_ves'] = formatLang(
+                        env=self.env,
+                        value=tax_group_base_ves,
+                        currency_obj=ves_currency
+                    )
+                    res_tax_group['formatted_tax_amount_currency_ves'] = formatLang(
+                        env=self.env,
+                        value=tax_group_tax_ves,
+                        currency_obj=ves_currency
+                    )
+                    res_tax_group['formatted_total_amount_currency_ves'] = formatLang(
+                        env=self.env,
+                        value=tax_group_total_ves,
+                        currency_obj=ves_currency
+                    )
+                else:
+                    res_tax_group['formatted_base_amount_currency_ves'] = formatLang(
+                        env=self.env,
+                        value=res_tax_group.get('base_amount', 0.0),
+                        currency_obj=ves_currency
+                    )
+                    res_tax_group['formatted_tax_amount_currency_ves'] = formatLang(
+                        env=self.env,
+                        value=res_tax_group.get('tax_amount', 0.0),
+                        currency_obj=ves_currency
+                    )
+                    res_tax_group['formatted_total_amount_currency_ves'] = formatLang(
+                        env=self.env,
+                        value=res_tax_group.get('total_amount', 0.0),
+                        currency_obj=ves_currency
+                    )
                 # Foranea
                 res_tax_group['formatted_base_amount_foreign_currency'] = formatLang(
                     env=self.env,

@@ -55,13 +55,21 @@ class AccountMove(models.Model):
         help="Tasa de la moneda seleccionada en la compañía (campo inverse_rate_company de res.currency)",
     )
 
-    @api.depends('currency_id')
+    @api.depends('currency_id', 'company_currency_id', 'invoice_date')
     def _compute_company_currency_rate(self):
         for move in self:
-            currency = move.currency_id
-            currency_search = move.env["res.currency"].search([("id", "=", currency.id)], limit=1)
-            if currency_search and hasattr(currency_search, "inverse_rate"):
-                move.company_currency_rate = currency_search.inverse_rate or 1.0
+            if move.currency_id and move.company_currency_id and move.currency_id != move.company_currency_id:
+                # Use the invoice_currency_rate if available (for invoices)
+                if move.is_invoice(include_receipts=True) and move.invoice_currency_rate:
+                    move.company_currency_rate = move.invoice_currency_rate
+                else:
+                    # For non-invoice moves, calculate the rate
+                    move.company_currency_rate = move.currency_id._get_conversion_rate(
+                        from_currency=move.currency_id,
+                        to_currency=move.company_currency_id,
+                        company=move.company_id,
+                        date=move.invoice_date or move.date or fields.Date.context_today(move),
+                    )
             else:
                 move.company_currency_rate = 1.0
 
