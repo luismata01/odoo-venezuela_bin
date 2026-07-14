@@ -315,13 +315,24 @@ class AccountMove(models.Model):
         super()._compute_amount()
 
         for move in self:
-            total_residual_company = 0.0
-            
-            for line in move.line_ids:
-                if line.display_type == 'payment_term':
-                    total_residual_company += line.amount_residual
-            sign = move.direction_sign
-            move.amount_residual_company = -sign * total_residual_company
+            # Calcular amount_residual_company correctamente
+            # Si la moneda del documento es diferente a la de la compañía,
+            # convertir el residual usando la tasa del documento
+            if move.currency_id and move.company_currency_id and move.currency_id != move.company_currency_id:
+                rate = move.move_currency_to_company_currency_rate
+                if rate and rate > 0:
+                    move.amount_residual_company = abs(move.amount_residual) * rate
+                else:
+                    # Fallback: calcular desde las líneas
+                    total_residual_company = 0.0
+                    for line in move.line_ids:
+                        if line.display_type == 'payment_term':
+                            total_residual_company += line.amount_residual
+                    sign = move.direction_sign
+                    move.amount_residual_company = -sign * total_residual_company
+            else:
+                # Misma moneda: usar el residual directamente
+                move.amount_residual_company = abs(move.amount_residual)
 
     @api.onchange('invoice_date_display')
     def _onchange_invoice_date_display(self):
