@@ -18,22 +18,22 @@
 						</div>
 						<div class="o_row">
 							<field name="state_id" placeholder="Estado"/>
-							<field name="city_id" placeholder="Ciudad" domain="[('state_id', '=', state_id)]" required='1'/>	
+							<field name="city_id" placeholder="Ciudad" domain="[('state_id', '=', state_id)]" required="require_full_address"/>
 						</div>
 						<field name="city" invisible='1'/>
 						<div class="o_row">
-							<field 
-								name="municipality" 
-								class="o_address_state" 
+							<field
+								name="municipality"
+								class="o_address_state"
 								placeholder="Municipality"
 								domain="[('state_id', '=', state_id)]"
-								required="1"
+								required="require_full_address"
 							/>
-							<field 
-								name="parish_id" 
+							<field
+								name="parish_id"
 								class="o_address_state"
 								placeholder="Parroquia"
-								required="1"
+								required="require_full_address"
 							/>
 						</div>
 					</div>

@@ -13,6 +13,7 @@
         "security/ir.model.access.csv",
         "views/res_partner.xml",
         "views/res_config_settings.xml",
+        "views/res_company_views.xml",
     ],
     "images": ["static/description/icon.png"],
     "application": True,

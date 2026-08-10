@@ -10,17 +10,18 @@
                 <group>
                     <field name="prefix_vat" nolabel="1"/>
                     <field name="vat" required="1" nolabel="1" placeholder="CI/RIF: 12345678"/>
+                    <field name="require_full_address" invisible="1"/>
                 </group>
             </xpath>
             <xpath expr="//field[@name='street']" position="attributes">
-                <attribute name="required">1</attribute>
+                <attribute name="required">require_full_address</attribute>
             </xpath>
             <xpath expr="//field[@name='country_id']" position="attributes">
-                <attribute name="required">1</attribute>
+                <attribute name="required">require_full_address</attribute>
             </xpath>
             <xpath expr="//field[@name='state_id']" position="attributes">
-                <attribute name="required">1</attribute>
-            </xpath> 
+                <attribute name="required">require_full_address</attribute>
+            </xpath>
         </field>
     </record>
 </odoo>

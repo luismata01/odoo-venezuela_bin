@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ResCountryParishBinauralLocalizacion(models.Model):
@@ -14,3 +14,12 @@ class ResCountryParishBinauralLocalizacion(models.Model):
     parish_id = fields.Many2one(
         "res.country.parish", domain="[('municipality_id', '=', municipality)]"
     )
+
+    require_full_address = fields.Boolean(
+        compute="_compute_require_full_address",
+    )
+
+    @api.depends_context("company")
+    def _compute_require_full_address(self):
+        for partner in self:
+            partner.require_full_address = self.env.company.require_full_address

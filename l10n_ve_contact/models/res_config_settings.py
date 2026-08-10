@@ -12,4 +12,8 @@ class ResConfigSettings(models.TransientModel):
         related='company_id.validate_user_creation_general',
         readonly=False
     )
-    
+
+    require_full_address = fields.Boolean(
+        related='company_id.require_full_address',
+        readonly=False
+    )
