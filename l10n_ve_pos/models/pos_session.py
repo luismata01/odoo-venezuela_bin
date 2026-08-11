@@ -21,61 +21,6 @@ class PosSession(models.Model):
         res["prefix_vats"] = self.env["res.partner"]._fields["prefix_vat"].selection
         return res
 
-    def _loader_params_pos_payment(self):
-        res = super()._loader_params_pos_payment()
-        res["search_params"]["fields"].append("foreign_rate")
-        return res
-
-    def _loader_params_pos_payment_method(self):
-        res = super()._loader_params_pos_payment_method()
-        res["search_params"]["fields"].append("is_foreign_currency")
-        return res
-
-    def _loader_params_account_tax(self):
-        res = super()._loader_params_account_tax()
-        res["search_params"]["fields"].append("type_tax_use")
-        return res
-
-    def _loader_params_res_partner(self):
-        res = super()._loader_params_res_partner()
-        res["search_params"]["fields"].append("prefix_vat")
-        res["search_params"]["fields"].append("city_id")
-        return res
-
-    def _loader_params_res_currency(self):
-        """
-        This method is used to get the params for the search_read of res.currency
-        """
-        res = super()._loader_params_res_currency()
-        res["search_params"]["domain"] = [
-            ("id", "in", [self.config_id.currency_id.id, self.config_id.foreign_currency_id.id])
-        ]
-        res["search_params"]["fields"].append("inverse_rate")
-        return res
-
-    def _loader_params_product_product(self):
-        params = super()._loader_params_product_product()
-        params["search_params"]["fields"].append("free_qty")
-        params["search_params"]["fields"].append("qty_available")
-        params["search_params"]["fields"].append("list_price_usd")
-        params["context"] = {
-            **params["context"],
-            "warehouse": self.config_id.picking_type_id.warehouse_id.id,
-        }
-        return params
-    
-    def _loader_params_res_company(self):
-        return {
-            'search_params': {
-                'domain': [('id', '=', self.company_id.id)],
-                'fields': [
-                    'currency_id', 'email', 'street', 'website', 'company_registry', 'vat', 'name', 'phone', 'partner_id',
-                    'country_id', 'state_id', 'tax_calculation_rounding_method', 'nomenclature_id', 'point_of_sale_use_ticket_qr_code',
-                    'point_of_sale_ticket_unique_code', 'account_fiscal_country_id',
-                ],
-            }
-        }
-
     # def _get_pos_ui_product_product(self, params):
     #     self = self.with_context(**params["context"])
     #     products = []

@@ -31,7 +31,12 @@ patch(ProductCard.prototype, {
       if (product?.list_price_usd) {
         foreign_price = product.list_price_usd;
       } else {
-        const local_price = product?.list_price || product?.lst_price || 0;
+        const order = this.pos.getOrder?.();
+        const pricelist = order?.pricelist_id || config.pricelist_id;
+        const local_price =
+          pricelist && typeof product?.getPrice === "function"
+            ? product.getPrice(pricelist, 1)
+            : product?.list_price || product?.lst_price || 0;
         const display_rate = config?.foreign_rate || 0;
         const rate = config?.foreign_inverse_rate || (display_rate ? 1.0 / display_rate : 0);
         foreign_price = local_price * rate;

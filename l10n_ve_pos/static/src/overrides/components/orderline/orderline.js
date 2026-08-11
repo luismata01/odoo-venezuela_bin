@@ -2,10 +2,12 @@
 import { patch } from "@web/core/utils/patch";
 import { Orderline } from "@point_of_sale/app/components/orderline/orderline";
 import { roundDecimals as round_di } from "@web/core/utils/numbers";
+import { usePos } from "@point_of_sale/app/hooks/pos_hook";
 
 patch(Orderline.prototype, {
   setup() {
     super.setup();
+    this.pos = usePos();
   },
 
   get lineForeignPrice() {

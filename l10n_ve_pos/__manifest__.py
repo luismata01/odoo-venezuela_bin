@@ -19,6 +19,7 @@
         "l10n_ve_location",
         "l10n_ve_accountant",
         "l10n_ve_payment_extension",
+        "l10n_ve_replenishment_cost_sync",
     ],
     # always loaded
     "data": [
