@@ -27,6 +27,7 @@
         "views/account_move.xml",
         "views/account_journal_views.xml",
         "views/res_config_settings.xml",
+        "views/res_company_views.xml",
         "views/menu.xml",
         "wizard/accounting_reports_views.xml",
         "views/account_debit_note_view.xml",

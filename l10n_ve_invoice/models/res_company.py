@@ -15,3 +15,10 @@ class ResCompany(models.Model):
     show_column_default_code_free_form = fields.Boolean(default=True)
     auto_select_debit_note_journal = fields.Boolean(default=False) 
     block_invoice_display_date_upper_than_date = fields.Boolean()
+    free_form_reserve_header_logo = fields.Boolean(
+        string="Reservar espacio para logo pre-impreso en Factura Libre",
+        default=False,
+        help="Deja en blanco el bloque superior izquierdo del encabezado de la Factura Libre "
+             "(10.5 x 3.7 cm) para talonarios con logo y datos de la compañía pre-impresos. "
+             "Los datos del cliente y de la factura se muestran en el lado derecho.",
+    )
