@@ -365,7 +365,8 @@ class AccountTax(models.Model):
 
         currency = (
             load('foreign_currency_id', None)
-            or self.env.company.foreign_currency_id)
+            or self.env.company.foreign_currency_id
+            or self.env.company.currency_id)
         base_line = {
             **kwargs,
             'record': record,
