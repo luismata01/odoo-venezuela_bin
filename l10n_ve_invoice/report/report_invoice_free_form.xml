@@ -215,6 +215,7 @@
 
                         <style t-if="reserve_header_logo">
                             .o_main_table td, .o_main_table th { padding-top: 1px; padding-bottom: 1px; line-height: 1.15; }
+                            .o_totals_table td { padding-top: 1px; padding-bottom: 1px; }
                         </style>
                         <table class="table table-sm o_main_table table-borderless" name="invoice_line_table">
                             <thead>
@@ -329,7 +330,7 @@
                                     <td t-attf-style="width: {{ '18%' if o.currency_id.name != 'VEF' else '59%' }};"></td>
                                     <t t-if="o.currency_id.name != 'VEF'">
                                         <td style="width: 41%; vertical-align: top; padding-right: 8px;">
-                                            <table class="table table-sm table-borderless mb-0" style="page-break-inside: avoid;">
+                                            <table class="table table-sm table-borderless mb-0 o_totals_table" style="page-break-inside: avoid;">
                                                 <tbody>
                                                     <tr>
                                                         <td colspan="2" class="text-end"><small><strong>Total en <span t-out="o.currency_id.name"/></strong></small></td>
@@ -341,7 +342,7 @@
                                         </td>
                                     </t>
                                     <td style="width: 41%; vertical-align: top;">
-                                        <table class="table table-sm table-borderless mb-0" style="page-break-inside: avoid;">
+                                        <table class="table table-sm table-borderless mb-0 o_totals_table" style="page-break-inside: avoid;">
                                             <tbody>
                                                 <tr>
                                                     <td colspan="2" class="text-end"><small><strong>Total en Bs.F</strong></small></td>
