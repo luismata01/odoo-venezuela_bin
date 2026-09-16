@@ -391,7 +391,7 @@
             <t t-set="base_vef" t-value="o.currency_id.id == %(base.VEF)s"/>
             <t t-foreach="subtotals" t-as="subtotal">
                 <t t-set="tax_groups" t-value="subtotal.get('tax_groups', [])"/>
-                <tr style="line-height:1.2px;" class="mt-2">
+                <tr style="line-height:1.2;" class="mt-2">
                     <td>
                         Subtotal
                     </td>
@@ -439,7 +439,7 @@
                     <!-- Solo se muestra para grupos con impuesto real (no exentos): esa base
                          ya se muestra en la fila "Exento" de arriba, mostrarla otra vez aquí
                          como "IVA 0% / 0 Bs.F" no aporta nada y confunde. -->
-                    <tr t-if="len(tax_groups) > 1 and (group.get('tax_amount', 0.0) != 0.0 or group.get('tax_amount_currency', 0.0) != 0.0)" style="line-height:1.2px;">
+                    <tr t-if="len(tax_groups) > 1 and (group.get('tax_amount', 0.0) != 0.0 or group.get('tax_amount_currency', 0.0) != 0.0)" style="line-height:1.2;">
                         <td>
                             <span t-out="'Base gravable ' + group.get('group_name', '')"/>
                         </td>
@@ -467,7 +467,7 @@
             <t t-set="base_vef" t-value="o.currency_id.id == %(base.VEF)s"/>
             <t t-foreach="subtotals" t-as="subtotal">
                 <t t-set="tax_groups" t-value="subtotal.get('tax_groups', [])"/>
-                <tr style="line-height:1.2px;" class="mt-2">
+                <tr style="line-height:1.2;" class="mt-2">
                     <td>
                         <span>Subtotal</span>
                     </td>
@@ -516,7 +516,7 @@
                     <!-- Solo se muestra para grupos con impuesto real (no exentos): esa base
                          ya se muestra en la fila "Exento" de arriba, mostrarla otra vez aquí
                          como "IVA 0% / 0" no aporta nada y confunde. -->
-                    <tr t-if="len(tax_groups) > 1 and (group.get('tax_amount', 0.0) != 0.0 or group.get('tax_amount_currency', 0.0) != 0.0)" style="line-height:1.2px;">
+                    <tr t-if="len(tax_groups) > 1 and (group.get('tax_amount', 0.0) != 0.0 or group.get('tax_amount_currency', 0.0) != 0.0)" style="line-height:1.2;">
                         <td>
                             <span t-out="'Base gravable ' + group.get('group_name', '')"/>
                         </td>
