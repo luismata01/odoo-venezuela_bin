@@ -322,37 +322,30 @@
                         
 
                         <div class="clearfix mb-1" style="margin-top: 0 !important;">
-                            <!-- Tabla en vez de row/col flex: wkhtmltopdf tiene soporte limitado
-                                 de flexbox, así que Bootstrap .row/.col-*/.justify-content-end
-                                 no posicionan de forma confiable en el PDF final. -->
-                            <table id="total" style="width: 100%; border-collapse: collapse;">
-                                <tr>
-                                    <td t-attf-style="width: {{ '18%' if o.currency_id.name != 'VEF' else '59%' }};"></td>
-                                    <t t-if="o.currency_id.name != 'VEF'">
-                                        <td style="width: 41%; vertical-align: top; padding-right: 8px;">
-                                            <table class="table table-sm table-borderless mb-0 o_totals_table">
-                                                <tbody>
-                                                    <tr>
-                                                        <td colspan="2" class="text-end"><small><strong>Total en <span t-out="o.currency_id.name"/></strong></small></td>
-                                                    </tr>
-                                                    <t t-set="tax_totals" t-value="o.tax_totals"/>
-                                                    <t t-call="l10n_ve_invoice.document_tax_totals" t-lang="lang"/>
-                                                </tbody>
-                                            </table>
-                                        </td>
-                                    </t>
-                                    <td style="width: 41%; vertical-align: top;">
-                                        <table class="table table-sm table-borderless mb-0 o_totals_table">
-                                            <tbody>
-                                                <tr>
-                                                    <td colspan="2" class="text-end"><small><strong>Total en Bs.F</strong></small></td>
-                                                </tr>
-                                                <t t-set="tax_totals" t-value="o.tax_totals"/>
-                                                <t t-call="l10n_ve_invoice.document_tax_totals_ve" t-lang="lang"/>
-                                            </tbody>
-                                        </table>
-                                    </td>
-                                </tr>
+                            <!-- margin-left:auto en vez de row/col flex o celda espaciadora vacia:
+                                 wkhtmltopdf tiene soporte limitado de flexbox (Bootstrap .row/.col-*/
+                                 .justify-content-end no posicionan de forma confiable), y una celda
+                                 <td> vacia como espaciador puede reservar una altura invisible que
+                                 no aparece en el texto pero sí empuja el bloque a otra pagina. -->
+                            <t t-if="o.currency_id.name != 'VEF'">
+                                <table class="table table-sm table-borderless mb-0 o_totals_table" style="width: 41%; margin-left: auto; border-collapse: collapse;">
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="2" class="text-end"><small><strong>Total en <span t-out="o.currency_id.name"/></strong></small></td>
+                                        </tr>
+                                        <t t-set="tax_totals" t-value="o.tax_totals"/>
+                                        <t t-call="l10n_ve_invoice.document_tax_totals" t-lang="lang"/>
+                                    </tbody>
+                                </table>
+                            </t>
+                            <table class="table table-sm table-borderless mb-0 o_totals_table" style="width: 41%; margin-left: auto; border-collapse: collapse;">
+                                <tbody>
+                                    <tr>
+                                        <td colspan="2" class="text-end"><small><strong>Total en Bs.F</strong></small></td>
+                                    </tr>
+                                    <t t-set="tax_totals" t-value="o.tax_totals"/>
+                                    <t t-call="l10n_ve_invoice.document_tax_totals_ve" t-lang="lang"/>
+                                </tbody>
                             </table>
                         </div>
 
