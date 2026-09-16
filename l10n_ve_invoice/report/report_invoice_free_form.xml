@@ -37,11 +37,15 @@
                 </div>
                 <div class="mt-5">
                     <div t-if="reserve_header_logo" style="margin-top: -3rem;">
-                        <div class="row mb-2">
-                            <div class="col-8 mw-100" name="header_left">
-                                <div style="min-height: 4cm;"/>
-                            </div>
-                            <div class="col-4 mw-100 text-end" name="header_right">
+                        <!-- Tabla en vez de row/col flex: wkhtmltopdf tiene soporte limitado
+                             de flexbox, así que Bootstrap .row/.col-*/.text-end no posicionan
+                             de forma confiable en el PDF final. -->
+                        <table class="mb-2" style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="width: 66%;" name="header_left">
+                                    <div style="min-height: 4cm;"/>
+                                </td>
+                                <td style="width: 34%; text-align: right; vertical-align: top;" name="header_right">
                                 <strong>
                                     <t t-if="o.move_type in ['out_refund', 'in_refund']">NOTA DE CRÉDITO</t>
                                     <t t-elif="o.journal_id.is_debit">NOTA DE DÉBITO</t>
@@ -105,8 +109,9 @@
                                 <strong>Pedido: </strong><t t-out="o.invoice_origin or 'N/A'"/>
                                 <br/>
                                 <strong>Fecha de emisión:</strong> <t t-if="o.date" t-out="o.date.strftime('%d/%m/%Y')"/>
-                            </div>
-                        </div>
+                                </td>
+                            </tr>
+                        </table>
                         <div id="informations" class="row mb-4">
                             <div class="col-12 text-end" name="header_client">
                                 <span><strong>Razón Social:</strong> <t t-out="o.partner_id.name"/></span>
@@ -319,33 +324,38 @@
                         
 
                         <div class="clearfix mb-1">
-                            <div id="total" class="row justify-content-end">
-                                <t t-if="o.currency_id.name != 'VEF'">
-                                    <div class="col-5">
+                            <!-- Tabla en vez de row/col flex: wkhtmltopdf tiene soporte limitado
+                                 de flexbox, así que Bootstrap .row/.col-*/.justify-content-end
+                                 no posicionan de forma confiable en el PDF final. -->
+                            <table id="total" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td t-attf-style="width: {{ '18%' if o.currency_id.name != 'VEF' else '59%' }};"></td>
+                                    <t t-if="o.currency_id.name != 'VEF'">
+                                        <td style="width: 41%; vertical-align: top; padding-right: 8px;">
+                                            <table class="table table-sm table-borderless mb-0" style="page-break-inside: avoid;">
+                                                <tbody>
+                                                    <tr>
+                                                        <td colspan="2" class="text-end"><small><strong>Total en <span t-out="o.currency_id.name"/></strong></small></td>
+                                                    </tr>
+                                                    <t t-set="tax_totals" t-value="o.tax_totals"/>
+                                                    <t t-call="l10n_ve_invoice.document_tax_totals" t-lang="lang"/>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </t>
+                                    <td style="width: 41%; vertical-align: top;">
                                         <table class="table table-sm table-borderless mb-0" style="page-break-inside: avoid;">
                                             <tbody>
                                                 <tr>
-                                                    <td colspan="2" class="text-end"><small><strong>Total en <span t-out="o.currency_id.name"/></strong></small></td>
+                                                    <td colspan="2" class="text-end"><small><strong>Total en Bs.F</strong></small></td>
                                                 </tr>
                                                 <t t-set="tax_totals" t-value="o.tax_totals"/>
-                                                <t t-call="l10n_ve_invoice.document_tax_totals" t-lang="lang"/>
+                                                <t t-call="l10n_ve_invoice.document_tax_totals_ve" t-lang="lang"/>
                                             </tbody>
                                         </table>
-                                    </div>
-                                </t>
-
-                                <div class="col-5">
-                                    <table class="table table-sm table-borderless mb-0" style="page-break-inside: avoid;">
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="2" class="text-end"><small><strong>Total en Bs.F</strong></small></td>
-                                            </tr>
-                                            <t t-set="tax_totals" t-value="o.tax_totals"/>
-                                            <t t-call="l10n_ve_invoice.document_tax_totals_ve" t-lang="lang"/>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
 
 
