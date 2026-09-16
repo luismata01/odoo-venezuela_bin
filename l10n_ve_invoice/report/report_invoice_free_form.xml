@@ -321,7 +321,7 @@
                         </table>
                         
 
-                        <div class="clearfix mb-1">
+                        <div class="clearfix mb-1" style="margin-top: 0 !important;">
                             <!-- Tabla en vez de row/col flex: wkhtmltopdf tiene soporte limitado
                                  de flexbox, así que Bootstrap .row/.col-*/.justify-content-end
                                  no posicionan de forma confiable en el PDF final. -->
