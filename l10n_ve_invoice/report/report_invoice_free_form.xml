@@ -16,6 +16,14 @@
 
         <template id="report_freeform_document">
             <div>
+                <!-- Las clases de Bootstrap (text-end, text-start, etc.) no se aplican de
+                     forma confiable en el motor que genera el PDF final; se fuerzan aqui
+                     via CSS propio para que los montos numericos queden alineados a la
+                     derecha en toda la factura. -->
+                <style>
+                    .text-end { text-align: right !important; }
+                    .text-start { text-align: left !important; }
+                </style>
                 <t t-set="reserve_header_logo" t-value="o.company_id.free_form_reserve_header_logo"/>
                 <h3 t-if="o.state == 'draft'" style="position:absolute;left:65px;top:250px;font-size:180px !important;opacity: 0.1;">BORRADOR</h3>
                 <div class="row" t-if="not reserve_header_logo">
