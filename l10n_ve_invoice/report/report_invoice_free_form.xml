@@ -225,7 +225,7 @@
                             .o_main_table td, .o_main_table th { padding-top: 1px; padding-bottom: 1px; line-height: 1.15; }
                             .o_totals_table td { padding-top: 1px; padding-bottom: 1px; }
                         </style>
-                        <table class="table table-sm o_main_table table-borderless" name="invoice_line_table">
+                        <table class="table table-sm o_main_table table-borderless" name="invoice_line_table" style="width: 100%;">
                             <thead>
                                 <tr class="border-bottom border-dark">
                                     <th name="th_code" class="text-start" t-if="o.company_id.show_column_default_code_free_form"><span>Código</span></th>
